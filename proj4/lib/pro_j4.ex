@@ -43,7 +43,7 @@ defmodule PROJ4 do
       {:ok, _pid} = DySupervisor.start_link(1)
 
       # start a child
-      DySupervisor.start_child("testArg", user_name)
+      DySupervisor.start_child(user_name, user_name)
       :registered
     end
   end
@@ -51,5 +51,10 @@ defmodule PROJ4 do
   def getChildren do
     # get children from Supervisor to see if it registered
     children = DynamicSupervisor.which_children(DySupervisor)
+
+    for x <- children do
+      {_, pidx, _, _} = x
+      _state = :sys.get_state(pidx)
+    end
   end
 end

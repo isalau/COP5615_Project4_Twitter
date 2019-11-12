@@ -33,7 +33,7 @@ end
 defmodule PROJ4 do
   def main do
     # ask for login or register
-    action = Mix.Shell.IO.prompt("LogIn or Register?")
+    action = Mix.Shell.IO.prompt("Log In or Register?")
 
     if(action == "Register" || "register") do
       user_name = Mix.Shell.IO.prompt("Please Create A UserName:")
@@ -56,5 +56,29 @@ defmodule PROJ4 do
       {_, pidx, _, _} = x
       _state = :sys.get_state(pidx)
     end
+  end
+
+  def makeManyKids(num) do
+    # start dynamic supervisor
+    {:ok, _pid} = DySupervisor.start_link(1)
+
+    makeKids(num)
+  end
+
+  def makeKids(num) when num > 1 do
+    IO.puts("making kids")
+
+    # start a child
+    DySupervisor.start_child(num, num)
+    newNum = num - 1
+    makeKids(newNum)
+  end
+
+  def makeKids(num) do
+    IO.puts("made kids")
+
+    # start a child
+    DySupervisor.start_child(num, num)
+    :registered
   end
 end

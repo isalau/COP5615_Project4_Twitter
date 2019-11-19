@@ -17,4 +17,8 @@ defmodule PROJ4Test do
     kids = PROJ4.getChildren()
     IO.inspect(kids)
   end
+
+  test "send one tweet" do
+    IO.puts("Sending on tweet")
+  end
 end

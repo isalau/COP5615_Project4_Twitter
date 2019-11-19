@@ -21,12 +21,21 @@ end
 defmodule User do
   use GenServer
 
+  def handle_call({:readTweet}, from, msg) do
+    IO.inspect(msg, label: "Someone I followed tweeted")
+    {:reply, :ok, msg}
+  end
+
   def start_link([args, user_name]) do
     {:ok, _pid} = GenServer.start_link(__MODULE__, args, name: :"#{user_name}")
   end
 
   def init(args) do
     {:ok, args}
+  end
+
+  def sendTweet(msg, myself, follower) do
+    GenServer.call(follower, {:readTweet, msg})
   end
 end
 

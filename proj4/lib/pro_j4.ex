@@ -45,16 +45,41 @@ defmodule PROJ4 do
     action = Mix.Shell.IO.prompt("Log In or Register?")
 
     if(action == "Register" || "register") do
-      user_name = Mix.Shell.IO.prompt("Please Create A UserName:")
-      IO.puts("Your new username is #{user_name}")
+      registerUser()
+    end
 
+    :registered
+  end
+
+  def registerUser do
+    user_name = Mix.Shell.IO.prompt("Please Create A UserName:")
+    createPassword(user_name)
+  end
+
+  def createPassword(user_name) do
+    password1 = Mix.Shell.IO.prompt("Please Create A Password:")
+    password2 = Mix.Shell.IO.prompt("Please Repeat Password For Verification:")
+
+    if(password1 == password2) do
       # start dynamic supervisor
       {:ok, _pid} = DySupervisor.start_link(1)
 
       # start a child
       DySupervisor.start_child(user_name, user_name)
-      :registered
+
+      IO.puts("Your new username is #{user_name} and your account was created")
+      showMainMenu()
+    else
+      IO.puts("Passwords did not match please try again")
+      createPassword(user_name)
     end
+  end
+
+  def showMainMenu() do
+    action =
+      Mix.Shell.IO.prompt(
+        "Would you like to:\n Delete account\n Send tweet\n Subscribe to user\n Re-tweet\n Query\n Check Feed\n"
+      )
   end
 
   def getChildren do

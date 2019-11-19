@@ -4,19 +4,43 @@
 
 ## **Register**
 
--main asks for log in or register -main asks for user-name -main asks for password main starts dynamic supervisor dynamic supervisor starts client security stuff for password storage present options to user (delete account, send tweet, subscribe to user, re-tweet, query, check feed)
+[x] main asks for log in or register<br>
+[x] main asks for user-name<br>
+[x] main asks for password<br>
+[x] main starts dynamic supervisor<br>
+[x] dynamic supervisor starts client<br>
+[ ] security stuff for password storage<br>
+[x] present options to user (delete account, send tweet, subscribe to user, re-tweet, query, check feed)
 
 ### **Tests**
 
-Single Test test that new client is in dynamic supervisor Single Test (with children already present in dynamic supervisor) test that new client is in dynamic supervisor test to register with already taken username test that all children are in the dynamic supervisor Multiples Tests do both tests above with 10, 100, 1000 children Security Tests ???
+**Single Test**<br><br>
+[x] test that new client is in dynamic supervisor<br><br>
+
+**Single Test (with children already present in dynamic supervisor)**<br>
+[ ] test that new client is in dynamic supervisor<br>
+[ ] test to register with already taken username<br>
+[ ] test that all children are in the dynamic supervisor<br><br>
+
+**Multiples Tests**<br>
+[ ] do both tests above with 10, 100, 1000 children<br><br>
+
+**Security Tests**<br>
 
 ## **Log In**
 
-main asks for log in or register main asks for user-name main asks for password log in if correct after 3 attempts exponential lock out for attempts
+[x] main asks for log in or register<br>
+[x] main asks for user-name<br>
+[] main asks for password<br>
+[] log in if correct<br>
+[]after 3 attempts exponential lock out for attempts<br>
 
 ### **Tests**
 
-Test for incorrect password Test for incorrect username Test that after 3 times starts exponential lock out Test that lock out is exponential
+[] Test for incorrect password<br>
+[] Test for incorrect username<br>
+[] Test that after 3 times starts exponential lock out<br>
+[] Test that lock out is exponential
 
 ## **Delete Account**
 

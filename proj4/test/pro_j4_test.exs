@@ -11,14 +11,21 @@ defmodule PROJ4Test do
   # end
 
   test "register user" do
-    IO.inspect("Making one user")
+    IO.inspect("Register one user")
     PROJ4.main()
     # Prints out the children user name to test that they were correctly registered
     kids = PROJ4.getChildren()
-    IO.inspect(kids)
   end
 
-  test "send one tweet" do
-    IO.puts("Sending on tweet")
-  end
+  # test "log in user" do
+  #   IO.inspect("Testing log in user")
+  #   PROJ4.main()
+  #   # Prints out the children user name to test that they were correctly registered
+  #   kids = PROJ4.getChildren()
+  #   IO.inspect(kids)
+  # end
+
+  # test "send one tweet" do
+  #   IO.puts("Sending on tweet")
+  # end
 end

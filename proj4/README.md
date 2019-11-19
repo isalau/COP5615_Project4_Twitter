@@ -14,16 +14,20 @@
 
 ### **Tests**
 
-**Single Test**<br><br>
-[x] test that new client is in dynamic supervisor<br><br>
+**Single Test**<br>
+<br>
+[x] test that new client is in dynamic supervisor<br>
+<br>
 
 **Single Test (with children already present in dynamic supervisor)**<br>
 [ ] test that new client is in dynamic supervisor<br>
 [ ] test to register with already taken username<br>
-[ ] test that all children are in the dynamic supervisor<br><br>
+[ ] test that all children are in the dynamic supervisor<br>
+<br>
 
 **Multiples Tests**<br>
-[ ] do both tests above with 10, 100, 1000 children<br><br>
+[ ] do both tests above with 10, 100, 1000 children<br>
+<br>
 
 **Security Tests**<br>
 
@@ -33,7 +37,7 @@
 [x] main asks for user-name<br>
 [] main asks for password<br>
 [] log in if correct<br>
-[]after 3 attempts exponential lock out for attempts<br>
+[] after 3 attempts exponential lock out for attempts<br>
 
 ### **Tests**
 

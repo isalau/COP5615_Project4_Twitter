@@ -6,9 +6,9 @@ defmodule DySupervisor do
     {:ok, _pid} = DynamicSupervisor.start_link(__MODULE__, init_arg, name: __MODULE__)
   end
 
-  def start_child(args, user_name) do
+  def start_child(user_name, password) do
     child_spec =
-      Supervisor.child_spec({User, [args, user_name]}, id: user_name, restart: :temporary)
+      Supervisor.child_spec({User, [user_name, password]}, id: user_name, restart: :temporary)
 
     {:ok, _child} = DynamicSupervisor.start_child(__MODULE__, child_spec)
   end
@@ -26,7 +26,8 @@ defmodule User do
     {:reply, :ok, msg}
   end
 
-  def start_link([args, user_name]) do
+  def start_link(args) do
+    user_name = Enum.at(args, 0)
     {:ok, _pid} = GenServer.start_link(__MODULE__, args, name: :"#{user_name}")
   end
 
@@ -46,6 +47,8 @@ defmodule PROJ4 do
 
     if(action == "Register" || "register") do
       registerUser()
+    else
+      loginUser()
     end
 
     :registered
@@ -65,7 +68,7 @@ defmodule PROJ4 do
       {:ok, _pid} = DySupervisor.start_link(1)
 
       # start a child
-      DySupervisor.start_child(user_name, user_name)
+      DySupervisor.start_child(user_name, password1)
 
       IO.puts("Your new username is #{user_name} and your account was created")
       showMainMenu()
@@ -75,6 +78,19 @@ defmodule PROJ4 do
     end
   end
 
+  def loginUser() do
+    user_name = Mix.Shell.IO.prompt("Please Enter Your UserName:")
+
+    checkPassword(user_name)
+  end
+
+  def checkPassword(user_name) do
+    password1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
+    getChildren()
+    # check if password is okay
+    showMainMenu()
+  end
+
   def showMainMenu() do
     action =
       Mix.Shell.IO.prompt(
@@ -82,13 +98,14 @@ defmodule PROJ4 do
       )
   end
 
-  def getChildren do
+  def getChildren() do
     # get children from Supervisor to see if it registered
     children = DynamicSupervisor.which_children(DySupervisor)
 
     for x <- children do
       {_, pidx, _, _} = x
-      _state = :sys.get_state(pidx)
+      state = :sys.get_state(pidx)
+      IO.inspect(state, label: "Child")
     end
   end
 

@@ -209,10 +209,31 @@ defmodule PROJ4 do
 
       "login\n" ->
         loginUser()
+
+      "test\n" ->
+        testSendTweet()
     end
 
     # :registered
     Supervisor.start_link([], strategy: :one_for_one)
+  end
+
+  def testSendTweet() do
+    # start dynamic supervisor
+    {:ok, _pid} = DySupervisor.start_link(1)
+
+    # make a bunch of kids
+    makeKids(10)
+
+    # register a specific user
+    DySupervisor.start_child("testUser", "t")
+
+    # make sure they are all there
+    kids = PROJ4.getChildren()
+    IO.inspect(kids)
+
+    # goToClient
+    goToClient("testUser")
   end
 
   def registerUser() do
@@ -327,7 +348,7 @@ defmodule PROJ4 do
     for x <- children do
       {_, pidx, _, _} = x
       state = :sys.get_state(pidx)
-      IO.inspect(state, label: "Child")
+      # IO.inspect(state, label: "Child")
     end
   end
 

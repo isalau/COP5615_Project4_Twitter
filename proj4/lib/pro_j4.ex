@@ -230,6 +230,7 @@ defmodule User do
   def subscribeToUser(state) do
     newUserToSubscribeTo1 = Mix.Shell.IO.prompt("Who do you want to subscribe to?")
     newUserToSubscribeTo = String.trim(newUserToSubscribeTo1)
+    username = Enum.at(state, 0)
 
     usernameLists = GenServer.call(Engine, {:getUsers})
     IO.inspect(usernameLists, label: "usernameLists")
@@ -243,13 +244,17 @@ defmodule User do
           IO.puts("You are already subscribed to this user")
           state
         else
-          # [] if they exists add to subscription list<br>
-          newsubscritionList = subscritionList ++ [newUserToSubscribeTo]
-          IO.puts("You are now subscribed to #{newUserToSubscribeTo}")
-          IO.inspect(newsubscritionList, label: "subscription list")
-          username = Enum.at(state, 0)
-          password = Enum.at(state, 1)
-          newState = [username, password, newsubscritionList]
+          if newUserToSubscribeTo != username do
+            newsubscritionList = subscritionList ++ [newUserToSubscribeTo]
+            IO.puts("You are now subscribed to #{newUserToSubscribeTo}")
+            IO.inspect(newsubscritionList, label: "subscription list")
+
+            password = Enum.at(state, 1)
+            newState = [username, password, newsubscritionList]
+          else
+            IO.puts("You cannot subscribe to yourself")
+            state
+          end
         end
       else
         IO.puts("no such user")

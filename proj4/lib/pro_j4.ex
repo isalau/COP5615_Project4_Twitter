@@ -206,39 +206,20 @@ defmodule User do
   end
 
   def subscribeToUser(state) do
-    # first ask  who you want to subscribe to
-    _newUserToSubscribeTo = Mix.Shell.IO.prompt("Who do you want to subscribe to?")
-    # look that person up in supervisor<br>
-
-    # children = DynamicSupervisor.which_children(DySupervisor)
+    newUserToSubscribeTo1 = Mix.Shell.IO.prompt("Who do you want to subscribe to?")
+    newUserToSubscribeTo = String.trim(newUserToSubscribeTo1)
 
     usernameLists = GenServer.call(Engine, {:getUsers})
     IO.inspect(usernameLists, label: "usernameLists")
-    # pidLists =
-    #   Enum.flat_map(children, fn {_, pidx, _, _} ->
-    #     [pidx]
-    #   end)
-    #
-    #
-    #
-    # usernameLists =
-    #   Enum.flat_map(children, fn {_, pidx, _, _} ->
-    #     userState = :sys.get_state(pidx)
-    #     user_name = Enum.at(userState, 0)
-    #     [user_name]
-    #   end)
 
-    # usernameLists = Enum.flat_map(kids, fn [user_name, _x] -> [user_name] end)
-    # IO.inspect(usernameLists, label: "usernameLists")
-    #
-    # if newUserToSubscribeTo in usernameLists do
-    #   IO.puts("existing user")
-    #   # [] if they exists add to subscription list<br>
-    #   # [] if they exists say you are subscribed<br>
-    # else
-    #   IO.puts("no such user")
-    #   # [] if not say that person is not a current user<br>
-    # end
+    if newUserToSubscribeTo in usernameLists do
+      IO.puts("existing user")
+      # [] if they exists add to subscription list<br>
+      # [] if they exists say you are subscribed<br>
+    else
+      IO.puts("no such user")
+      showMainMenu(state)
+    end
 
     state
   end

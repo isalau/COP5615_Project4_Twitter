@@ -21,7 +21,7 @@ end
 defmodule User do
   use GenServer
 
-  def handle_call({:readTweet}, from, msg) do
+  def handle_call({:readTweet}, _from, msg) do
     IO.inspect(msg, label: "Someone I followed tweeted")
     {:reply, :ok, msg}
   end
@@ -35,7 +35,7 @@ defmodule User do
     {:ok, args}
   end
 
-  def sendTweet(msg, myself, follower) do
+  def sendTweet(msg, _myself, follower) do
     GenServer.call(follower, {:readTweet, msg})
   end
 end
@@ -45,18 +45,39 @@ defmodule PROJ4 do
     # ask for login or register
     action = Mix.Shell.IO.prompt("Log In or Register?")
 
-    if(action == "Register" || "register") do
-      registerUser()
-    else
-      loginUser()
+    case action do
+      "Register\n" ->
+        registerUser()
+
+      "register\n" ->
+        registerUser()
+
+      "Log In\n" ->
+        loginUser()
+
+      "LogIn\n" ->
+        loginUser()
+
+      "log In\n" ->
+        loginUser()
+
+      "logIn\n" ->
+        loginUser()
+
+      "log in\n" ->
+        loginUser()
+
+      "login\n" ->
+        loginUser()
     end
 
     :registered
   end
 
-  def registerUser do
+  def registerUser() do
     user_name = Mix.Shell.IO.prompt("Please Create A UserName:")
-    createPassword(user_name)
+    userName = String.trim(user_name)
+    createPassword(userName)
   end
 
   def createPassword(user_name) do
@@ -80,19 +101,30 @@ defmodule PROJ4 do
 
   def loginUser() do
     user_name = Mix.Shell.IO.prompt("Please Enter Your UserName:")
-
-    checkPassword(user_name)
+    userName = String.trim(user_name)
+    checkPassword(userName)
   end
 
   def checkPassword(user_name) do
-    password1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
-    getChildren()
-    # check if password is okay
-    showMainMenu()
+    _password1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
+    # check that username exists
+    kids = getChildren()
+    IO.inspect(kids, label: "kids")
+
+    usernameLists = Enum.flat_map(kids, fn [user_name, _x] -> [user_name] end)
+    IO.inspect(usernameLists, label: "usernameLists")
+
+    if user_name in usernameLists do
+      # check if password is okay
+      showMainMenu()
+    else
+      IO.inspect(user_name, label: "Incorrect username or password. Please try again.")
+      loginUser()
+    end
   end
 
   def showMainMenu() do
-    action =
+    _action =
       Mix.Shell.IO.prompt(
         "Would you like to:\n Delete account\n Send tweet\n Subscribe to user\n Re-tweet\n Query\n Check Feed\n"
       )

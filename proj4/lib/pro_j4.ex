@@ -38,6 +38,95 @@ defmodule User do
   def sendTweet(msg, _myself, follower) do
     GenServer.call(follower, {:readTweet, msg})
   end
+
+  def showMainMenu() do
+    action =
+      Mix.Shell.IO.prompt(
+        "Would you like to:\n Delete account\n Send tweet\n Subscribe to user\n Re-tweet\n Query\n Check Feed\n"
+      )
+
+    case action do
+      "Delete\n" ->
+        deleteUser()
+
+      "delete\n" ->
+        deleteUser()
+    end
+  end
+
+  def deleteUser() do
+    answer = Mix.Shell.IO.prompt("Are you sure you would like to delete your account?")
+
+    case answer do
+      "Yes\n" ->
+        # if checkPassword passes
+        deleteConfirm()
+
+      "yes\n" ->
+        deleteConfirm()
+
+      "No\n" ->
+        showMainMenu()
+
+      "no\n" ->
+        showMainMenu()
+    end
+  end
+
+  def deleteConfirm() do
+    confirm = Mix.Shell.IO.prompt("Final confirmation. Delete Account?")
+
+    case confirm do
+      "Yes\n" ->
+        # delete from supervisor and log out
+        IO.puts("Account Deleted. Goodbye.")
+
+      "yes\n" ->
+        # delete from supervisor and log out
+        IO.puts("Account Deleted. Goodbye.")
+
+      "No\n" ->
+        showMainMenu()
+
+      "no\n" ->
+        showMainMenu()
+    end
+  end
+
+  def getChildren() do
+    # get children from Supervisor to see if it registered
+    children = DynamicSupervisor.which_children(DySupervisor)
+
+    for x <- children do
+      {_, pidx, _, _} = x
+      state = :sys.get_state(pidx)
+      IO.inspect(state, label: "Child")
+    end
+  end
+
+  def makeManyKids(num) do
+    # start dynamic supervisor
+    {:ok, _pid} = DySupervisor.start_link(1)
+
+    makeKids(num)
+  end
+
+  def makeKids(num) when num > 1 do
+    IO.puts("making kids")
+
+    # start a child
+    DySupervisor.start_child(num, num)
+    newNum = num - 1
+    makeKids(newNum)
+  end
+
+  def makeKids(num) do
+    IO.puts("made kids")
+
+    # start a child
+    DySupervisor.start_child(num, num)
+    :registered
+  end
 end
 
 defmodule PROJ4 do
@@ -104,10 +193,10 @@ defmodule PROJ4 do
   def loginUser() do
     user_name = Mix.Shell.IO.prompt("Please Enter Your UserName:")
     userName = String.trim(user_name)
-    checkPassword(userName)
+    checkPassword1(userName)
   end
 
-  def checkPassword(user_name) do
+  def checkPassword1(user_name) do
     password1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
     password = String.trim(password1)
 
@@ -129,6 +218,20 @@ defmodule PROJ4 do
     else
       IO.inspect(user_name, label: "Incorrect username or password. Please try again.")
       loginUser()
+    end
+  end
+
+  def checkPassword(user_name) do
+    # check that username exists
+    kids = getChildren()
+    IO.inspect(kids, label: "kids")
+
+    # check if password is okay
+    if(Enum.member?(kids, [user_name, password])) do
+      true
+    else
+      # incorrect password
+      false
     end
   end
 

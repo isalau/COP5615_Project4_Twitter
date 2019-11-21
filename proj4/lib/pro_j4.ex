@@ -115,10 +115,24 @@ defmodule User do
     case confirm do
       "Yes\n" ->
         # delete from supervisor and log out
+        dpid = Process.whereis(DySupervisor)
+        val = Process.alive?(dpid)
+        IO.inspect(val, label: "test if sup is alive")
+        userName = Enum.at(state, 0)
+        pid = GenServer.whereis(:"#{userName}")
+        IO.inspect(pid, label: "deleting child")
+        DynamicSupervisor.terminate_child(dpid, pid)
         IO.puts("Account Deleted. Goodbye.")
 
       "yes\n" ->
         # delete from supervisor and log out
+        dpid = Process.whereis(DySupervisor)
+        val = Process.alive?(dpid)
+        IO.inspect(val, label: "test if sup is alive")
+        userName = Enum.at(state, 0)
+        pid = GenServer.whereis(:"#{userName}")
+        IO.inspect(pid, label: "deleting child")
+        DynamicSupervisor.terminate_child(dpid, pid)
         IO.puts("Account Deleted. Goodbye.")
 
       "No\n" ->

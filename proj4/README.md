@@ -14,16 +14,20 @@
 
 ### **Tests**
 
-**Single Test**<br><br>
-[x] test that new client is in dynamic supervisor<br><br>
+**Single Test**<br>
+<br>
+[x] test that new client is in dynamic supervisor<br>
+<br>
 
 **Single Test (with children already present in dynamic supervisor)**<br>
 [ ] test that new client is in dynamic supervisor<br>
 [ ] test to register with already taken username<br>
-[ ] test that all children are in the dynamic supervisor<br><br>
+[ ] test that all children are in the dynamic supervisor<br>
+<br>
 
 **Multiples Tests**<br>
-[ ] do both tests above with 10, 100, 1000 children<br><br>
+[ ] do both tests above with 10, 100, 1000 children<br>
+<br>
 
 **Security Tests**<br>
 
@@ -48,7 +52,7 @@
 [x] ask user if they are sure they want to delete the account<br>
 [x] if no; show main options again<br>
 [x] if yes; ask user for password<br>
-[] passed password check: ask again if they want to delete<br>
+[x] passed password check: ask again if they want to delete<br>
 [] if yes; delete account from the supervisor<br>
 [x] if no; go back to main menu<br>
 [] after failed password 3 attempts they have to wait 24 hours until they can try to delete again<br>

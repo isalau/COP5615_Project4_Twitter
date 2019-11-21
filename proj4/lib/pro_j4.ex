@@ -78,10 +78,11 @@ defmodule User do
       "Yes\n" ->
         # if checkPassword passes
         userName = Enum.at(state, 0)
-        password1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
-        password = String.trim(password1)
+        password = Enum.at(state, 1)
+        enteredpassword1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
+        enteredpassword = String.trim(enteredpassword1)
 
-        if checkPassword(userName, password) == true do
+        if password == enteredpassword do
           deleteConfirm(state)
         else
           IO.puts("Incorrect password")
@@ -90,10 +91,11 @@ defmodule User do
       "yes\n" ->
         # if checkPassword passes
         userName = Enum.at(state, 0)
-        password1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
-        password = String.trim(password1)
+        password = Enum.at(state, 1)
+        enteredpassword1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
+        enteredpassword = String.trim(enteredpassword1)
 
-        if checkPassword(userName, password) == true do
+        if password == enteredpassword do
           deleteConfirm(state)
         else
           IO.puts("Incorrect password")

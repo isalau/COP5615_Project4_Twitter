@@ -6,6 +6,7 @@ defmodule PROJ4.MixProject do
       app: :proj4,
       version: "0.1.0",
       elixir: "~> 1.9",
+      escript: escript_config(),
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
@@ -14,8 +15,13 @@ defmodule PROJ4.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
+      mod: {PROJ4, []},
       extra_applications: [:logger]
     ]
+  end
+
+  defp escript_config do
+    [main_module: Proj4]
   end
 
   # Run "mix help deps" to learn about dependencies.

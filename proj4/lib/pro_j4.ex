@@ -36,8 +36,8 @@ defmodule User do
     {:ok, args}
   end
 
-  def handle_call({:showMainMenu}, _from, state) do
-    IO.puts("in show main menu")
+  def handle_cast({:showMainMenu}, state) do
+    IO.inspect(state, label: "in show main menu")
 
     action =
       Mix.Shell.IO.prompt(
@@ -46,16 +46,16 @@ defmodule User do
 
     case action do
       "Delete\n" ->
-        deleteUser()
+        deleteUser(state)
 
       "delete\n" ->
-        deleteUser()
+        deleteUser(state)
     end
 
-    {:noreply, state}
+    {:reply, :ok, state}
   end
 
-  def showMainMenu() do
+  def showMainMenu(state) do
     action =
       Mix.Shell.IO.prompt(
         "Would you like to:\n Delete account\n Send tweet\n Subscribe to user\n Re-tweet\n Query\n Check Feed\n"
@@ -63,33 +63,51 @@ defmodule User do
 
     case action do
       "Delete\n" ->
-        deleteUser()
+        deleteUser(state)
 
       "delete\n" ->
-        deleteUser()
+        deleteUser(state)
     end
   end
 
-  def deleteUser() do
+  def deleteUser(state) do
+    IO.inspect(state, label: "State")
     answer = Mix.Shell.IO.prompt("Are you sure you would like to delete your account?")
 
     case answer do
       "Yes\n" ->
         # if checkPassword passes
-        deleteConfirm()
+        userName = Enum.at(state, 0)
+        password1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
+        password = String.trim(password1)
+
+        if checkPassword(userName, password) == true do
+          deleteConfirm(state)
+        else
+          IO.puts("Incorrect password")
+        end
 
       "yes\n" ->
-        deleteConfirm()
+        # if checkPassword passes
+        userName = Enum.at(state, 0)
+        password1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
+        password = String.trim(password1)
+
+        if checkPassword(userName, password) == true do
+          deleteConfirm(state)
+        else
+          IO.puts("Incorrect password")
+        end
 
       "No\n" ->
-        showMainMenu()
+        showMainMenu(state)
 
       "no\n" ->
-        showMainMenu()
+        showMainMenu(state)
     end
   end
 
-  def deleteConfirm() do
+  def deleteConfirm(state) do
     confirm = Mix.Shell.IO.prompt("Final confirmation. Delete Account?")
 
     case confirm do
@@ -102,10 +120,35 @@ defmodule User do
         IO.puts("Account Deleted. Goodbye.")
 
       "No\n" ->
-        showMainMenu()
+        showMainMenu(state)
 
       "no\n" ->
-        showMainMenu()
+        showMainMenu(state)
+    end
+  end
+
+  def checkPassword(user_name, password) do
+    # check that username exists
+    kids = getChildren()
+    IO.inspect(kids, label: "kids")
+
+    # check if password is okay
+    if(Enum.member?(kids, [user_name, password])) do
+      true
+    else
+      # incorrect password
+      false
+    end
+  end
+
+  def getChildren() do
+    # get children from Supervisor to see if it registered
+    children = DynamicSupervisor.which_children(DySupervisor)
+
+    for x <- children do
+      {_, pidx, _, _} = x
+      state = :sys.get_state(pidx)
+      IO.inspect(state, label: "Child")
     end
   end
 
@@ -115,9 +158,16 @@ defmodule User do
 end
 
 defmodule PROJ4 do
-  def main do
+  use Application
+
+  def start(_type, _args) do
     # ask for login or register
     action = Mix.Shell.IO.prompt("Log In or Register?")
+
+    # Task.start(fn ->
+    #   :timer.sleep(1000)
+    #   IO.puts("done sleeping")
+    # end)
 
     case action do
       "Register\n" ->
@@ -145,7 +195,8 @@ defmodule PROJ4 do
         loginUser()
     end
 
-    :registered
+    # :registered
+    Supervisor.start_link([], strategy: :one_for_one)
   end
 
   def registerUser() do
@@ -243,7 +294,7 @@ defmodule PROJ4 do
 
   def goToClient(userName) do
     IO.inspect(userName, label: "in goToClient")
-    GenServer.call(:"#{userName}", {:showMainMenu})
+    GenServer.cast(:"#{userName}", {:showMainMenu})
   end
 
   def showMainMenu() do

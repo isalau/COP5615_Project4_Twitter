@@ -47,7 +47,7 @@
 --> user selected delete account from menu<br>
 [x] ask user if they are sure they want to delete the account<br>
 [x] if no; show main options again<br>
-[] if yes; ask user for password<br>
+[x] if yes; ask user for password<br>
 [] passed password check: ask again if they want to delete<br>
 [] if yes; delete account from the supervisor<br>
 [x] if no; go back to main menu<br>

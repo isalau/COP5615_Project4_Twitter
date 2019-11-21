@@ -93,7 +93,8 @@ defmodule PROJ4 do
       DySupervisor.start_child(user_name, password)
 
       IO.puts("Your new username is #{user_name} and your account was created")
-      showMainMenu()
+      IO.puts("Please Log In For First Time")
+      loginUser()
     else
       IO.puts("Passwords did not match please try again")
       createPassword(user_name)
@@ -132,10 +133,57 @@ defmodule PROJ4 do
   end
 
   def showMainMenu() do
-    _action =
+    action =
       Mix.Shell.IO.prompt(
         "Would you like to:\n Delete account\n Send tweet\n Subscribe to user\n Re-tweet\n Query\n Check Feed\n"
       )
+
+    case action do
+      "Delete\n" ->
+        deleteUser()
+
+      "delete\n" ->
+        deleteUser()
+    end
+  end
+
+  def deleteUser() do
+    answer = Mix.Shell.IO.prompt("Are you sure you would like to delete your account?")
+
+    case answer do
+      "Yes\n" ->
+        # if checkPassword passes
+        deleteConfirm()
+
+      "yes\n" ->
+        deleteConfirm()
+
+      "No\n" ->
+        showMainMenu()
+
+      "no\n" ->
+        showMainMenu()
+    end
+  end
+
+  def deleteConfirm() do
+    confirm = Mix.Shell.IO.prompt("Final confirmation. Delete Account?")
+
+    case confirm do
+      "Yes\n" ->
+        # delete from supervisor and log out
+        IO.puts("Account Deleted. Goodbye.")
+
+      "yes\n" ->
+        # delete from supervisor and log out
+        IO.puts("Account Deleted. Goodbye.")
+
+      "No\n" ->
+        showMainMenu()
+
+      "no\n" ->
+        showMainMenu()
+    end
   end
 
   def getChildren() do

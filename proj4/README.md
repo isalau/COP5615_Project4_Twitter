@@ -2,7 +2,7 @@
 
 **TODO: Add description**
 
-## **Register**
+## **1a) Register**
 
 [x] main asks for log in or register<br>
 [x] main asks for user-name<br>
@@ -31,12 +31,12 @@
 
 **Security Tests**<br>
 
-## **Log In**
+## **1b) Log In**
 
 [x] main asks for log in or register<br>
 [x] main asks for user-name<br>
-[] main asks for password<br>
-[] log in if correct<br>
+[x] main asks for password<br>
+[x] log in if correct<br>
 [] after 3 attempts exponential lock out for attempts<br>
 
 ### **Tests**
@@ -46,11 +46,40 @@
 [] Test that after 3 times starts exponential lock out<br>
 [] Test that lock out is exponential
 
-## **Delete Account**
+## **1c) Delete Account**
+
+--> user selected delete account from menu [] ask user if they are sure they want to delete the account<br>
+[] if no; show main options again<br>
+[] if yes; ask user for password<br>
+[] passed password check: ask again if they want to delete<br>
+[] if yes; delete account from the supervisor<br>
+[] if no; go back to main menu<br>
+[] after failed password 3 attempts they have to wait 24 hours until they can try to delete again<br>
 
 ### **Tests**
 
-## **Send Tweet**
+[] Test user is gone from dynamic supervisor<br>
+[] Test user cannot log in<br>
+[] Test other users cannot @ them<br>
+[] Test user's tweets are gone<br>
+
+## **2) Send Tweet**
+
+### **Tests**
+
+## **3) Subscribe**
+
+### **Tests**
+
+## **4) Re-Tweet**
+
+### **Tests**
+
+## **5) Query**
+
+### **Tests**
+
+## **6) Deliver Tweet Immediately**
 
 ### **Tests**
 

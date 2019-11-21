@@ -18,6 +18,71 @@ defmodule DySupervisor do
   end
 end
 
+defmodule EngineSupervisor do
+  use DynamicSupervisor
+
+  def start_link(opts) do
+    IO.puts("Its here in EngineSupervisor")
+    {:ok, _pid} = DynamicSupervisor.start_link(__MODULE__, opts, name: __MODULE__)
+  end
+
+  def start_child(opts) do
+    child_spec = Supervisor.child_spec({Engine, opts}, id: :engine, restart: :temporary)
+
+    {:ok, _child} = DynamicSupervisor.start_child(__MODULE__, child_spec)
+  end
+
+  def init(_init_arg) do
+    DynamicSupervisor.init(strategy: :one_for_one)
+  end
+end
+
+defmodule Engine do
+  use GenServer
+  # state has all the current usernames, passwords
+  def start_link(state) do
+    GenServer.start_link(__MODULE__, state, name: __MODULE__)
+  end
+
+  ## Callbacks
+
+  @impl true
+  def init(stack) do
+    {:ok, stack}
+  end
+
+  @impl true
+  def handle_call(:pop, _from, [head | tail]) do
+    {:reply, head, tail}
+  end
+
+  @impl true
+  def handle_cast({:addUser, [username, password]}, state) do
+    IO.inspect("in engine add user")
+    new_state = state ++ [[username, password]]
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_call({:getUsers}, _from, state) do
+    # IO.inspect(state, label: "Engine state")
+
+    usersLists =
+      Enum.flat_map(state, fn [u, _p] ->
+        [u]
+      end)
+
+    # IO.inspect(usersLists, label: "usersLists")
+
+    {:reply, usersLists, state}
+  end
+
+  @impl true
+  def handle_cast({:push, head}, tail) do
+    {:noreply, [head | tail]}
+  end
+end
+
 defmodule User do
   use GenServer
 
@@ -38,21 +103,9 @@ defmodule User do
 
   def handle_cast({:showMainMenu}, state) do
     IO.inspect(state, label: "in show main menu")
+    showMainMenu(state)
 
-    action =
-      Mix.Shell.IO.prompt(
-        "Would you like to:\n Delete account\n Send tweet\n Subscribe to user\n Re-tweet\n Query\n Check Feed\n"
-      )
-
-    case action do
-      "Delete\n" ->
-        deleteUser(state)
-
-      "delete\n" ->
-        deleteUser(state)
-    end
-
-    {:reply, :ok, state}
+    {:noreply, state}
   end
 
   def showMainMenu(state) do
@@ -67,6 +120,15 @@ defmodule User do
 
       "delete\n" ->
         deleteUser(state)
+
+      "s\n" ->
+        _new_state = subscribeToUser(state)
+
+      "Subscribe\n" ->
+        _new_state = subscribeToUser(state)
+
+      "subscribe\n" ->
+        _new_state = subscribeToUser(state)
     end
   end
 
@@ -77,7 +139,7 @@ defmodule User do
     case answer do
       "Yes\n" ->
         # if checkPassword passes
-        userName = Enum.at(state, 0)
+        _userName = Enum.at(state, 0)
         password = Enum.at(state, 1)
         enteredpassword1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
         enteredpassword = String.trim(enteredpassword1)
@@ -90,7 +152,7 @@ defmodule User do
 
       "yes\n" ->
         # if checkPassword passes
-        userName = Enum.at(state, 0)
+        _userName = Enum.at(state, 0)
         password = Enum.at(state, 1)
         enteredpassword1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
         enteredpassword = String.trim(enteredpassword1)
@@ -143,6 +205,44 @@ defmodule User do
     end
   end
 
+  def subscribeToUser(state) do
+    # first ask  who you want to subscribe to
+    _newUserToSubscribeTo = Mix.Shell.IO.prompt("Who do you want to subscribe to?")
+    # look that person up in supervisor<br>
+
+    # children = DynamicSupervisor.which_children(DySupervisor)
+
+    usernameLists = GenServer.call(Engine, {:getUsers})
+    IO.inspect(usernameLists, label: "usernameLists")
+    # pidLists =
+    #   Enum.flat_map(children, fn {_, pidx, _, _} ->
+    #     [pidx]
+    #   end)
+    #
+    #
+    #
+    # usernameLists =
+    #   Enum.flat_map(children, fn {_, pidx, _, _} ->
+    #     userState = :sys.get_state(pidx)
+    #     user_name = Enum.at(userState, 0)
+    #     [user_name]
+    #   end)
+
+    # usernameLists = Enum.flat_map(kids, fn [user_name, _x] -> [user_name] end)
+    # IO.inspect(usernameLists, label: "usernameLists")
+    #
+    # if newUserToSubscribeTo in usernameLists do
+    #   IO.puts("existing user")
+    #   # [] if they exists add to subscription list<br>
+    #   # [] if they exists say you are subscribed<br>
+    # else
+    #   IO.puts("no such user")
+    #   # [] if not say that person is not a current user<br>
+    # end
+
+    state
+  end
+
   def checkPassword(user_name, password) do
     # check that username exists
     kids = getChildren()
@@ -177,13 +277,19 @@ defmodule PROJ4 do
   use Application
 
   def start(_type, _args) do
+    # supervisor for client
+    {:ok, _pid} = DySupervisor.start_link(1)
+
+    # # supervisor for engine
+    {:ok, _pid} = EngineSupervisor.start_link(1)
+    EngineSupervisor.start_child([])
+    # children = [
+    #   {Engine, name: Engine}
+    # ]
+    #
+    # {:ok, _pid} = Supervisor.start_link(children, strategy: :one_for_one)
     # ask for login or register
     action = Mix.Shell.IO.prompt("Log In or Register?")
-
-    # Task.start(fn ->
-    #   :timer.sleep(1000)
-    #   IO.puts("done sleeping")
-    # end)
 
     case action do
       "Register\n" ->
@@ -219,14 +325,12 @@ defmodule PROJ4 do
   end
 
   def testSendTweet() do
-    # start dynamic supervisor
-    {:ok, _pid} = DySupervisor.start_link(1)
-
     # make a bunch of kids
-    makeKids(10)
+    makeKids(6)
 
     # register a specific user
     DySupervisor.start_child("testUser", "t")
+    GenServer.cast(Engine, {:addUser, ["testUser", "t"]})
 
     # make sure they are all there
     kids = PROJ4.getChildren()
@@ -249,10 +353,10 @@ defmodule PROJ4 do
     if(password1 == password2) do
       # start dynamic supervisor
       password = String.trim(password1)
-      {:ok, _pid} = DySupervisor.start_link(1)
 
       # start a child
       DySupervisor.start_child(user_name, password)
+      GenServer.cast(Engine, {:addUser, [user_name, password]})
 
       IO.puts("Your new username is #{user_name} and your account was created")
       IO.puts("Please Log In For First Time")
@@ -335,10 +439,7 @@ defmodule PROJ4 do
   end
 
   def showMainMenu() do
-    action =
-      Mix.Shell.IO.prompt(
-        "Would you like to:\n Delete account\n Send tweet\n Subscribe to user\n Re-tweet\n Query\n Check Feed\n"
-      )
+    IO.puts("In wrong show main menu")
   end
 
   def getChildren() do
@@ -347,7 +448,7 @@ defmodule PROJ4 do
 
     for x <- children do
       {_, pidx, _, _} = x
-      state = :sys.get_state(pidx)
+      _state = :sys.get_state(pidx)
       # IO.inspect(state, label: "Child")
     end
   end
@@ -360,10 +461,11 @@ defmodule PROJ4 do
   end
 
   def makeKids(num) when num > 1 do
-    IO.puts("making kids")
+    # IO.puts("making kids")
 
     # start a child
     DySupervisor.start_child(num, num)
+    GenServer.cast(Engine, {:addUser, [num, num]})
     newNum = num - 1
     makeKids(newNum)
   end
@@ -373,6 +475,7 @@ defmodule PROJ4 do
 
     # start a child
     DySupervisor.start_child(num, num)
+    GenServer.cast(Engine, {:addUser, [num, num]})
     :registered
   end
 end

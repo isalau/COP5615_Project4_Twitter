@@ -68,6 +68,13 @@ BUG: Not returning form terminate<br>
 
 ## **3) Subscribe**
 
+--> user selected subscribe from menu<br>
+[] first ask who you want to subscribe to<br>
+[] look that person up in supervisor<br>
+[] if they exists add to subscription list<br>
+[] if they exists say you are subscribed<br>
+[] if not say that person is not a current user<br>
+
 ### **Tests**
 
 ## **4) Re-Tweet**

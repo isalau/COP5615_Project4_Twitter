@@ -10,12 +10,12 @@ defmodule PROJ4Test do
   #   IO.inspect(kids)
   # end
 
-  test "register user" do
-    IO.inspect("Register one user")
-    PROJ4.main()
-    # Prints out the children user name to test that they were correctly registered
-    # kids = PROJ4.getChildren()
-  end
+  # test "register user" do
+  #   IO.inspect("Register one user")
+  #   PROJ4.main()
+  #   # Prints out the children user name to test that they were correctly registered
+  #   # kids = PROJ4.getChildren()
+  # end
 
   # test "log in user" do
   #   IO.inspect("Testing log in user")

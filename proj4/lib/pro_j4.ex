@@ -28,6 +28,7 @@ defmodule User do
 
   def start_link(args) do
     user_name = Enum.at(args, 0)
+    IO.inspect(user_name, label: "username for new client")
     {:ok, _pid} = GenServer.start_link(__MODULE__, args, name: :"#{user_name}")
   end
 
@@ -35,8 +36,23 @@ defmodule User do
     {:ok, args}
   end
 
-  def sendTweet(msg, _myself, follower) do
-    GenServer.call(follower, {:readTweet, msg})
+  def handle_call({:showMainMenu}, _from, state) do
+    IO.puts("in show main menu")
+
+    action =
+      Mix.Shell.IO.prompt(
+        "Would you like to:\n Delete account\n Send tweet\n Subscribe to user\n Re-tweet\n Query\n Check Feed\n"
+      )
+
+    case action do
+      "Delete\n" ->
+        deleteUser()
+
+      "delete\n" ->
+        deleteUser()
+    end
+
+    {:noreply, state}
   end
 
   def showMainMenu() do
@@ -93,39 +109,8 @@ defmodule User do
     end
   end
 
-  def getChildren() do
-    # get children from Supervisor to see if it registered
-    children = DynamicSupervisor.which_children(DySupervisor)
-
-    for x <- children do
-      {_, pidx, _, _} = x
-      state = :sys.get_state(pidx)
-      IO.inspect(state, label: "Child")
-    end
-  end
-
-  def makeManyKids(num) do
-    # start dynamic supervisor
-    {:ok, _pid} = DySupervisor.start_link(1)
-
-    makeKids(num)
-  end
-
-  def makeKids(num) when num > 1 do
-    IO.puts("making kids")
-
-    # start a child
-    DySupervisor.start_child(num, num)
-    newNum = num - 1
-    makeKids(newNum)
-  end
-
-  def makeKids(num) do
-    IO.puts("made kids")
-
-    # start a child
-    DySupervisor.start_child(num, num)
-    :registered
+  def sendTweet(msg, _myself, follower) do
+    GenServer.call(follower, {:readTweet, msg})
   end
 end
 
@@ -193,7 +178,28 @@ defmodule PROJ4 do
   def loginUser() do
     user_name = Mix.Shell.IO.prompt("Please Enter Your UserName:")
     userName = String.trim(user_name)
-    checkPassword1(userName)
+
+    password1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
+    password = String.trim(password1)
+
+    # check that username exists
+    kids = getChildren()
+    IO.inspect(kids, label: "kids")
+
+    usernameLists = Enum.flat_map(kids, fn [user_name, _x] -> [user_name] end)
+    IO.inspect(usernameLists, label: "usernameLists")
+
+    if userName in usernameLists do
+      if checkPassword(userName, password) == true do
+        goToClient(userName)
+      else
+        IO.inspect(userName, label: "1 Incorrect username or password. Please try again.")
+        loginUser()
+      end
+    else
+      IO.inspect(userName, label: "2 Incorrect username or password. Please try again.")
+      loginUser()
+    end
   end
 
   def checkPassword1(user_name) do
@@ -221,7 +227,7 @@ defmodule PROJ4 do
     end
   end
 
-  def checkPassword(user_name) do
+  def checkPassword(user_name, password) do
     # check that username exists
     kids = getChildren()
     IO.inspect(kids, label: "kids")
@@ -235,58 +241,16 @@ defmodule PROJ4 do
     end
   end
 
+  def goToClient(userName) do
+    IO.inspect(userName, label: "in goToClient")
+    GenServer.call(:"#{userName}", {:showMainMenu})
+  end
+
   def showMainMenu() do
     action =
       Mix.Shell.IO.prompt(
         "Would you like to:\n Delete account\n Send tweet\n Subscribe to user\n Re-tweet\n Query\n Check Feed\n"
       )
-
-    case action do
-      "Delete\n" ->
-        deleteUser()
-
-      "delete\n" ->
-        deleteUser()
-    end
-  end
-
-  def deleteUser() do
-    answer = Mix.Shell.IO.prompt("Are you sure you would like to delete your account?")
-
-    case answer do
-      "Yes\n" ->
-        # if checkPassword passes
-        deleteConfirm()
-
-      "yes\n" ->
-        deleteConfirm()
-
-      "No\n" ->
-        showMainMenu()
-
-      "no\n" ->
-        showMainMenu()
-    end
-  end
-
-  def deleteConfirm() do
-    confirm = Mix.Shell.IO.prompt("Final confirmation. Delete Account?")
-
-    case confirm do
-      "Yes\n" ->
-        # delete from supervisor and log out
-        IO.puts("Account Deleted. Goodbye.")
-
-      "yes\n" ->
-        # delete from supervisor and log out
-        IO.puts("Account Deleted. Goodbye.")
-
-      "No\n" ->
-        showMainMenu()
-
-      "no\n" ->
-        showMainMenu()
-    end
   end
 
   def getChildren() do

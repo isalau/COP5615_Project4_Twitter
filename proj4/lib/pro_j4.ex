@@ -86,10 +86,11 @@ defmodule PROJ4 do
 
     if(password1 == password2) do
       # start dynamic supervisor
+      password = String.trim(password1)
       {:ok, _pid} = DySupervisor.start_link(1)
 
       # start a child
-      DySupervisor.start_child(user_name, password1)
+      DySupervisor.start_child(user_name, password)
 
       IO.puts("Your new username is #{user_name} and your account was created")
       showMainMenu()
@@ -106,7 +107,9 @@ defmodule PROJ4 do
   end
 
   def checkPassword(user_name) do
-    _password1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
+    password1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
+    password = String.trim(password1)
+
     # check that username exists
     kids = getChildren()
     IO.inspect(kids, label: "kids")
@@ -116,7 +119,12 @@ defmodule PROJ4 do
 
     if user_name in usernameLists do
       # check if password is okay
-      showMainMenu()
+      if(Enum.member?(kids, [user_name, password])) do
+        showMainMenu()
+      else
+        IO.inspect(user_name, label: "Incorrect username or password. Please try again.")
+        loginUser()
+      end
     else
       IO.inspect(user_name, label: "Incorrect username or password. Please try again.")
       loginUser()

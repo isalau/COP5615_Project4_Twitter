@@ -8,7 +8,7 @@ defmodule DySupervisor do
 
   def start_child(user_name, password) do
     child_spec =
-      Supervisor.child_spec({User, [user_name, password]}, id: user_name, restart: :temporary)
+      Supervisor.child_spec({User, [user_name, password, []]}, id: user_name, restart: :temporary)
 
     {:ok, _child} = DynamicSupervisor.start_child(__MODULE__, child_spec)
   end
@@ -58,9 +58,17 @@ defmodule Engine do
 
   @impl true
   def handle_cast({:addUser, [username, password]}, state) do
-    IO.inspect("in engine add user")
+    # IO.inspect("in engine add user")
     new_state = state ++ [[username, password]]
     {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_cast({:updateUser, username, new_state}, state) do
+    # maybe update state in engine haven't decided yet
+    # call user back to update their state
+    GenServer.cast(:"#{username}", {:updateState, new_state})
+    {:noreply, state}
   end
 
   @impl true
@@ -101,7 +109,15 @@ defmodule User do
     {:ok, args}
   end
 
-  def handle_cast({:showMainMenu}, state) do
+  @impl true
+  def handle_cast({:updateState, new_state}, state) do
+    IO.inspect(new_state, label: "in update user state")
+    showMainMenu(new_state)
+
+    {:noreply, new_state}
+  end
+
+  def handle_cast({:goToClient}, state) do
     IO.inspect(state, label: "in show main menu")
     showMainMenu(state)
 
@@ -122,13 +138,19 @@ defmodule User do
         deleteUser(state)
 
       "s\n" ->
-        _new_state = subscribeToUser(state)
+        new_state = subscribeToUser(state)
+        IO.inspect(new_state, label: "new state in showMainMenu")
+        # tell engine to update their list and  my state
+        username = Enum.at(state, 0)
+        GenServer.cast(Engine, {:updateUser, username, new_state})
+
+      # showMainMenu(state)
 
       "Subscribe\n" ->
-        _new_state = subscribeToUser(state)
+        new_state = subscribeToUser(state)
 
       "subscribe\n" ->
-        _new_state = subscribeToUser(state)
+        new_state = subscribeToUser(state)
     end
   end
 
@@ -212,16 +234,30 @@ defmodule User do
     usernameLists = GenServer.call(Engine, {:getUsers})
     IO.inspect(usernameLists, label: "usernameLists")
 
-    if newUserToSubscribeTo in usernameLists do
-      IO.puts("existing user")
-      # [] if they exists add to subscription list<br>
-      # [] if they exists say you are subscribed<br>
-    else
-      IO.puts("no such user")
-      showMainMenu(state)
-    end
+    new_state =
+      if newUserToSubscribeTo in usernameLists do
+        IO.puts("existing user")
+        [_username, _password, subscritionList] = state
 
-    state
+        if newUserToSubscribeTo in subscritionList do
+          IO.puts("You are already subscribed to this user")
+          state
+        else
+          # [] if they exists add to subscription list<br>
+          newsubscritionList = subscritionList ++ [newUserToSubscribeTo]
+          IO.puts("You are now subscribed to #{newUserToSubscribeTo}")
+          IO.inspect(newsubscritionList, label: "subscription list")
+          username = Enum.at(state, 0)
+          password = Enum.at(state, 1)
+          newState = [username, password, newsubscritionList]
+        end
+      else
+        IO.puts("no such user")
+        state
+      end
+
+    # IO.inspect(new_state, label: "new state in subscribeToUser")
+    new_state
   end
 
   def checkPassword(user_name, password) do
@@ -416,7 +452,7 @@ defmodule PROJ4 do
 
   def goToClient(userName) do
     IO.inspect(userName, label: "in goToClient")
-    GenServer.cast(:"#{userName}", {:showMainMenu})
+    GenServer.cast(:"#{userName}", {:goToClient})
   end
 
   def showMainMenu() do
@@ -445,18 +481,24 @@ defmodule PROJ4 do
     # IO.puts("making kids")
 
     # start a child
-    DySupervisor.start_child(num, num)
-    GenServer.cast(Engine, {:addUser, [num, num]})
+    numm = Integer.to_string(num)
+    username = String.replace_suffix("child x", " x", numm)
+    DySupervisor.start_child(username, num)
+
+    GenServer.cast(Engine, {:addUser, [username, num]})
     newNum = num - 1
     makeKids(newNum)
   end
 
   def makeKids(num) do
-    IO.puts("made kids")
+    # IO.puts("made kids")
 
     # start a child
-    DySupervisor.start_child(num, num)
-    GenServer.cast(Engine, {:addUser, [num, num]})
+    numm = Integer.to_string(num)
+    username = String.replace_suffix("child x", " x", numm)
+    DySupervisor.start_child(username, num)
+
+    GenServer.cast(Engine, {:addUser, [username, num]})
     :registered
   end
 end

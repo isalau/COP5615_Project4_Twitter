@@ -71,8 +71,9 @@ BUG: Not returning form terminate<br>
 --> user selected subscribe from menu<br>
 [x] first ask who you want to subscribe to<br>
 [x] look that person up in supervisor<br>
-[] if they exists add to subscription list<br>
-[] if they exists say you are subscribed<br>
+[x] if they exists check not in your subscription list<br>
+[x] if they exists add to subscription list<br>
+[x] if they exists say you are subscribed<br>
 [x] if not say that person is not a current user<br>
 
 ### **Tests**

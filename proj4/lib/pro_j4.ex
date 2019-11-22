@@ -478,7 +478,15 @@ defmodule User do
     index = String.to_integer(String.trim(index1))
     [_index, {tweetToReTweet, _user_nameToReTweet}] = Enum.at(numberedFeedList, index)
 
-    _confirm = Mix.Shell.IO.prompt("You selected #{tweetToReTweet} is this correct?")
+    confirm1 = Mix.Shell.IO.prompt("You selected #{tweetToReTweet} is this correct?")
+    confirm = String.trim(confirm1)
+
+    if confirm == "yes" || confirm == "Yes" do
+      addedToTweet1 = Mix.Shell.IO.prompt("What would you like to add to the tweet?")
+      addedToTweet = String.trim(addedToTweet1)
+      newTweet = "#{addedToTweet} : respond to tweet #{tweetToReTweet}"
+      IO.inspect(newTweet, label: "new Tweet")
+    end
   end
 
   def query(state) do

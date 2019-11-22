@@ -486,6 +486,26 @@ defmodule User do
       addedToTweet = String.trim(addedToTweet1)
       newTweet = "#{addedToTweet} : respond to tweet #{tweetToReTweet}"
       IO.inspect(newTweet, label: "new Tweet")
+
+      # FOR TESTING
+      followersList = ["child1", "child2", "child3", "child4", "child5", "child6"]
+
+      # save retweet
+      username = Enum.at(state, 0)
+      password = Enum.at(state, 1)
+      subscritionList = Enum.at(state, 2)
+
+      _followersList = Enum.at(state, 3)
+      tweetsList = Enum.at(state, 4)
+      feedList = Enum.at(state, 5)
+      GenServer.cast(Engine, {:sendTweet, username, newTweet, followersList})
+      IO.inspect(newTweet, label: "You tweeted")
+
+      newTweetsList = tweetsList ++ [newTweet]
+      _newState = [username, password, subscritionList, followersList, newTweetsList, feedList]
+    else
+      showMainMenu(state)
+      state
     end
   end
 

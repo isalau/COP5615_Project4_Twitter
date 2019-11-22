@@ -34,7 +34,7 @@ defmodule EngineSupervisor do
   end
 
   def start_child(opts) do
-    init_tweet = {"init feed tweet #testing123", "init_user"}
+    init_tweet = {"init feed tweet #testing123", "childtest"}
 
     child_spec =
       Supervisor.child_spec({Engine, [[], [init_tweet]]}, id: :engine, restart: :temporary)
@@ -131,6 +131,29 @@ defmodule Engine do
 
         if(String.contains?(tweet, query) == true) do
           IO.inspect(tweet, label: "Found In Engine")
+          results = results ++ [{tweet, username}]
+        end
+      end
+
+    IO.inspect(results, label: "found query in engine")
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:findPerson, query}, state) do
+    feedList = Enum.at(state, 1)
+    IO.inspect(feedList, label: "feedList")
+    # for every value in the feedlist, search the tweet than search the username
+    # if something interesting is found append it to results
+
+    results = []
+
+    results =
+      for x <- feedList do
+        {tweet, username} = x
+
+        if(String.contains?(username, query) == true) do
+          IO.inspect(username, label: "Found In Engine")
           results = results ++ [{tweet, username}]
         end
       end
@@ -435,7 +458,8 @@ defmodule User do
     # person
     if String.contains?(query, "@") do
       # go to engine
-      GenServer.cast(Engine, {:findPerson, query})
+      {at, name} = String.split_at(query, 1)
+      GenServer.cast(Engine, {:findPerson, name})
     else
       # hashtag
       if String.contains?(query, "#") do

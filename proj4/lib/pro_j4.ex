@@ -6,10 +6,10 @@ defmodule DySupervisor do
     {:ok, _pid} = DynamicSupervisor.start_link(__MODULE__, init_arg, name: __MODULE__)
   end
 
-  # state = username, password, subscritionList, followersList, usersTweets
+  # state = username, password, subscritionList, followersList, usersTweets, feedList
   def start_child(user_name, password) do
     child_spec =
-      Supervisor.child_spec({User, [user_name, password, ["testUser"], [], []]},
+      Supervisor.child_spec({User, [user_name, password, ["testUser"], [], [], []]},
         id: user_name,
         restart: :temporary
       )
@@ -157,8 +157,18 @@ defmodule User do
 
   @impl true
   def handle_cast({:getTweet, username, tweet}, state) do
-    IO.inspect(tweet, label: "Got tweet from #{username}")
-    {:noreply, state}
+    # IO.inspect(tweet, label: "Got tweet from #{username}")
+    username = Enum.at(state, 0)
+    password = Enum.at(state, 1)
+    subscritionList = Enum.at(state, 2)
+    followersList = Enum.at(state, 3)
+    tweetsList = Enum.at(state, 4)
+    feedList = Enum.at(state, 5)
+
+    newFeedsList = feedList ++ [tweet]
+    newState = [username, password, subscritionList, followersList, tweetsList, newFeedsList]
+    IO.inspect(newState, label: "New tweet received")
+    {:noreply, newState}
   end
 
   def showMainMenu(state) do

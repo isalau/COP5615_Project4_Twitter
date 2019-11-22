@@ -8,7 +8,10 @@ defmodule DySupervisor do
 
   def start_child(user_name, password) do
     child_spec =
-      Supervisor.child_spec({User, [user_name, password, []]}, id: user_name, restart: :temporary)
+      Supervisor.child_spec({User, [user_name, password, [], [], []]},
+        id: user_name,
+        restart: :temporary
+      )
 
     {:ok, _child} = DynamicSupervisor.start_child(__MODULE__, child_spec)
   end
@@ -57,21 +60,6 @@ defmodule Engine do
   end
 
   @impl true
-  def handle_cast({:addUser, [username, password]}, state) do
-    # IO.inspect("in engine add user")
-    new_state = state ++ [[username, password]]
-    {:noreply, new_state}
-  end
-
-  @impl true
-  def handle_cast({:updateUser, username, new_state}, state) do
-    # maybe update state in engine haven't decided yet
-    # call user back to update their state
-    GenServer.cast(:"#{username}", {:updateState, new_state})
-    {:noreply, state}
-  end
-
-  @impl true
   def handle_call({:getUsers}, _from, state) do
     # IO.inspect(state, label: "Engine state")
 
@@ -86,6 +74,27 @@ defmodule Engine do
   end
 
   @impl true
+  def handle_cast({:addUser, [username, password]}, state) do
+    # IO.inspect("in engine add user")
+    new_state = state ++ [[username, password]]
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_cast({:addFollower, follower, followee}, state) do
+    GenServer.cast(:"#{followee}", {:addFollower, follower, followee})
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:updateUser, username, new_state}, state) do
+    # maybe update state in engine haven't decided yet
+    # call user back to update their state
+    GenServer.cast(:"#{username}", {:updateState, new_state})
+    {:noreply, state}
+  end
+
+  @impl true
   def handle_cast({:push, head}, tail) do
     {:noreply, [head | tail]}
   end
@@ -94,10 +103,7 @@ end
 defmodule User do
   use GenServer
 
-  def handle_call({:readTweet}, _from, msg) do
-    IO.inspect(msg, label: "Someone I followed tweeted")
-    {:reply, :ok, msg}
-  end
+  # state = username, password, subscritionList, followersList, usersTweets
 
   def start_link(args) do
     user_name = Enum.at(args, 0)
@@ -105,16 +111,30 @@ defmodule User do
     {:ok, _pid} = GenServer.start_link(__MODULE__, args, name: :"#{user_name}")
   end
 
+  @impl true
   def init(args) do
     {:ok, args}
   end
 
   @impl true
-  def handle_cast({:updateState, new_state}, state) do
+  def handle_cast({:updateState, new_state}, _state) do
     IO.inspect(new_state, label: "in update user state")
-    showMainMenu(new_state)
 
     {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_cast({:addFollower, follower, _followee}, state) do
+    username = Enum.at(state, 0)
+    password = Enum.at(state, 1)
+    subscritionList = Enum.at(state, 2)
+    followersList = Enum.at(state, 3)
+    tweetsList = Enum.at(state, 4)
+
+    newFollowersList = followersList ++ [follower]
+    newState = [username, password, subscritionList, newFollowersList, tweetsList]
+    IO.inspect(newState, label: "in addFollower user state")
+    {:noreply, newState}
   end
 
   def handle_cast({:goToClient}, state) do
@@ -137,20 +157,40 @@ defmodule User do
       "delete\n" ->
         deleteUser(state)
 
-      "s\n" ->
+      "Subscribe\n" ->
         new_state = subscribeToUser(state)
         IO.inspect(new_state, label: "new state in showMainMenu")
         # tell engine to update their list and  my state
         username = Enum.at(state, 0)
         GenServer.cast(Engine, {:updateUser, username, new_state})
 
-      # showMainMenu(state)
-
-      "Subscribe\n" ->
-        new_state = subscribeToUser(state)
-
       "subscribe\n" ->
         new_state = subscribeToUser(state)
+        IO.inspect(new_state, label: "new state in showMainMenu")
+        # tell engine to update their list and  my state
+        username = Enum.at(state, 0)
+        GenServer.cast(Engine, {:updateUser, username, new_state})
+
+      "s\n" ->
+        new_state = tweet(state)
+        IO.inspect(new_state, label: "new state in showMainMenu")
+        # tell engine to update their list and  my state
+        username = Enum.at(state, 0)
+        GenServer.cast(Engine, {:updateUser, username, new_state})
+
+      "sendTweet\n" ->
+        new_state = tweet(state)
+        IO.inspect(new_state, label: "new state in showMainMenu")
+        # tell engine to update their list and  my state
+        username = Enum.at(state, 0)
+        GenServer.cast(Engine, {:updateUser, username, new_state})
+
+      "Tweet\n" ->
+        new_state = tweet(state)
+        IO.inspect(new_state, label: "new state in showMainMenu")
+        # tell engine to update their list and  my state
+        username = Enum.at(state, 0)
+        GenServer.cast(Engine, {:updateUser, username, new_state})
     end
   end
 
@@ -233,12 +273,12 @@ defmodule User do
     username = Enum.at(state, 0)
 
     usernameLists = GenServer.call(Engine, {:getUsers})
-    IO.inspect(usernameLists, label: "usernameLists")
+    # IO.inspect(usernameLists, label: "usernameLists")
 
     new_state =
       if newUserToSubscribeTo in usernameLists do
-        IO.puts("existing user")
-        [_username, _password, subscritionList] = state
+        # IO.puts("existing user")
+        [_username, _password, subscritionList, _followerssList, _tweetsList] = state
 
         if newUserToSubscribeTo in subscritionList do
           IO.puts("You are already subscribed to this user")
@@ -246,11 +286,15 @@ defmodule User do
         else
           if newUserToSubscribeTo != username do
             newsubscritionList = subscritionList ++ [newUserToSubscribeTo]
+
+            GenServer.cast(Engine, {:addFollower, username, newUserToSubscribeTo})
             IO.puts("You are now subscribed to #{newUserToSubscribeTo}")
-            IO.inspect(newsubscritionList, label: "subscription list")
+            # IO.inspect(newsubscritionList, label: "subscription list")
 
             password = Enum.at(state, 1)
-            newState = [username, password, newsubscritionList]
+            followersList = Enum.at(state, 3)
+            tweetsList = Enum.at(state, 4)
+            _newState = [username, password, newsubscritionList, followersList, tweetsList]
           else
             IO.puts("You cannot subscribe to yourself")
             state
@@ -263,6 +307,18 @@ defmodule User do
 
     # IO.inspect(new_state, label: "new state in subscribeToUser")
     new_state
+  end
+
+  def tweet(state) do
+    username = Enum.at(state, 0)
+    password = Enum.at(state, 1)
+    subscritionList = Enum.at(state, 2)
+    followersList = Enum.at(state, 3)
+    tweetsList = Enum.at(state, 4)
+    tweet = Mix.Shell.IO.prompt("What would you like to tweet?")
+    IO.inspect(tweet, label: "You tweeted")
+    newTweetsList = tweetsList ++ [tweet]
+    _newState = [username, password, subscritionList, followersList, newTweetsList]
   end
 
   def checkPassword(user_name, password) do

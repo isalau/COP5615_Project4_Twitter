@@ -14,16 +14,20 @@
 
 ### **Tests**
 
-**Single Test**<br><br>
-[x] test that new client is in dynamic supervisor<br><br>
+**Single Test**<br>
+<br>
+[x] test that new client is in dynamic supervisor<br>
+<br>
 
 **Single Test (with children already present in dynamic supervisor)**<br>
 [ ] test that new client is in dynamic supervisor<br>
 [ ] test to register with already taken username<br>
-[ ] test that all children are in the dynamic supervisor<br><br>
+[ ] test that all children are in the dynamic supervisor<br>
+<br>
 
 **Multiples Tests**<br>
-[ ] do both tests above with 10, 100, 1000 children<br><br>
+[ ] do both tests above with 10, 100, 1000 children<br>
+<br>
 
 **Security Tests**<br>
 
@@ -64,6 +68,13 @@ BUG: Not returning form terminate<br>
 
 ## **2) Send Tweet**
 
+--> user selected send tweet from menu<br>
+[x] first ask what they to want to tweet<br>
+[] do character limit check<br>
+[x] save tweet to state<br>
+[x] respond tweet successful<br>
+[x] go back to main menu<br>
+
 ### **Tests**
 
 ## **3) Subscribe**
@@ -74,6 +85,7 @@ BUG: Not returning form terminate<br>
 [x] if they exists check not in your subscription list<br>
 [x] if they exists add to subscription list<br>
 [x] if they exists say you are subscribed<br>
+[] if they add user to subscribed user's followers list<br>
 [x] if not say that person is not a current user<br>
 
 ### **Tests**

@@ -88,7 +88,7 @@ BUG: Not returning form terminate<br>
 
 ## **4) Re-Tweet**
 [x]Show user's feed with numbers <br>
-[]Ask which one they would like to retweet<br>
+[x]Ask which one they would like to retweet<br>
 []Add re-tweet to own tweets<br>
 
 ### **Tests**

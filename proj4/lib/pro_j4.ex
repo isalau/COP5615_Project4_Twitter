@@ -471,6 +471,14 @@ defmodule User do
       end
 
     IO.inspect(numberedFeedList, label: "Your feed")
+
+    index1 =
+      Mix.Shell.IO.prompt("Which tweet would you like to retweet? (Please write index only)")
+
+    index = String.to_integer(String.trim(index1))
+    [_index, {tweetToReTweet, _user_nameToReTweet}] = Enum.at(numberedFeedList, index)
+
+    _confirm = Mix.Shell.IO.prompt("You selected #{tweetToReTweet} is this correct?")
   end
 
   def query(state) do

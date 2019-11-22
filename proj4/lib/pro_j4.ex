@@ -8,7 +8,7 @@ defmodule DySupervisor do
 
   # state = username, password, subscritionList, followersList, usersTweets, feedList
   def start_child(user_name, password) do
-    init_tweet = {"init feed tweet", "init_user"}
+    init_tweet = {"init feed tweet #testing123", "init_user"}
 
     child_spec =
       Supervisor.child_spec(
@@ -34,7 +34,10 @@ defmodule EngineSupervisor do
   end
 
   def start_child(opts) do
-    child_spec = Supervisor.child_spec({Engine, opts}, id: :engine, restart: :temporary)
+    init_tweet = {"init feed tweet #testing123", "init_user"}
+
+    child_spec =
+      Supervisor.child_spec({Engine, [[], [init_tweet]]}, id: :engine, restart: :temporary)
 
     {:ok, _child} = DynamicSupervisor.start_child(__MODULE__, child_spec)
   end
@@ -46,7 +49,7 @@ end
 
 defmodule Engine do
   use GenServer
-  # state has all the current usernames, passwords
+  # state has all the current {usernames, passwords}, allTweets
   def start_link(state) do
     GenServer.start_link(__MODULE__, state, name: __MODULE__)
   end
@@ -57,17 +60,13 @@ defmodule Engine do
   end
 
   @impl true
-  def handle_call(:pop, _from, [head | tail]) do
-    {:reply, head, tail}
-  end
-
-  @impl true
   def handle_call({:getUsers}, _from, state) do
     # IO.inspect(state, label: "Engine state")
 
     usersLists =
-      Enum.flat_map(state, fn [u, _p] ->
-        [u]
+      Enum.flat_map(state, fn [uPL, _aT] ->
+        {username, password} = uPL
+        [username]
       end)
 
     # IO.inspect(usersLists, label: "usersLists")
@@ -78,6 +77,12 @@ defmodule Engine do
   @impl true
   def handle_cast({:addUser, [username, password]}, state) do
     # IO.inspect("in engine add user")
+
+    usernamePasswordTuple = Enum.at(state, 0)
+    newusernamePasswordTuple = usernamePasswordTuple ++ [{username, password}]
+    allTweetsList = Enum.at(state, 1)
+    new_state = [newusernamePasswordTuple, allTweetsList]
+
     new_state = state ++ [[username, password]]
     {:noreply, new_state}
   end
@@ -104,12 +109,34 @@ defmodule Engine do
       GenServer.cast(:"#{follower}", {:getTweet, username, tweet})
     end)
 
-    {:noreply, state}
+    usernamePasswordTuple = Enum.at(state, 0)
+    allTweetsList = Enum.at(state, 1)
+    newallTweetsList = allTweetsList ++ {tweet, username}
+    new_state = [usernamePasswordTuple, newallTweetsList]
+    {:noreply, new_state}
   end
 
   @impl true
-  def handle_cast({:push, head}, tail) do
-    {:noreply, [head | tail]}
+  def handle_cast({:findHashtag, query}, state) do
+    feedList = Enum.at(state, 1)
+    IO.inspect(feedList, label: "feedList")
+    # for every value in the feedlist, search the tweet than search the username
+    # if something interesting is found append it to results
+
+    results = []
+
+    results =
+      for x <- feedList do
+        {tweet, username} = x
+
+        if(String.contains?(tweet, query) == true) do
+          IO.inspect(tweet, label: "Found In Engine")
+          results = results ++ [{tweet, username}]
+        end
+      end
+
+    IO.inspect(results, label: "found query in engine")
+    {:noreply, state}
   end
 end
 
@@ -407,38 +434,43 @@ defmodule User do
 
     # person
     if String.contains?(query, "@") do
-    end
+      # go to engine
+      GenServer.cast(Engine, {:findPerson, query})
+    else
+      # hashtag
+      if String.contains?(query, "#") do
+        # go to engine
+        GenServer.cast(Engine, {:findHashtag, query})
+        # normal search
+      else
+        feedList = Enum.at(state, 5)
+        IO.inspect(feedList)
 
-    # hashtag
-    if String.contains?(query, "#") do
-    end
+        # for every value in the feedlist, search the tweet than search the username
+        # if something interesting is found append it to results
 
-    feedList = Enum.at(state, 5)
-    IO.inspect(feedList)
+        results = []
 
-    # for every value in the feedlist, search the tweet than search the username
-    # if something interesting is found append it to results
+        results =
+          for x <- feedList do
+            {tweet, username} = x
 
-    results = []
+            if(String.contains?(tweet, query) == true) do
+              IO.inspect(tweet, label: "Found")
+              results = results ++ [{tweet, username}]
+            end
 
-    results =
-      for x <- feedList do
-        {tweet, username} = x
+            if(String.contains?(username, query) == true) do
+              IO.inspect(username, label: "Found")
+              results = results ++ [{tweet, username}]
+            end
+          end
 
-        if(String.contains?(tweet, query) == true) do
-          IO.inspect(tweet, label: "Found")
-          results = results ++ [{tweet, username}]
-        end
-
-        if(String.contains?(username, query) == true) do
-          IO.inspect(username, label: "Found")
-          results = results ++ [{tweet, username}]
-        end
+        IO.inspect(results, label: "found query")
+        # Enum.each(feedList, fn {tweet, username} ->
+        # end)
       end
-
-    IO.inspect(results, label: "found query")
-    # Enum.each(feedList, fn {tweet, username} ->
-    # end)
+    end
   end
 end
 

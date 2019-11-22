@@ -14,16 +14,20 @@
 
 ### **Tests**
 
-**Single Test**<br><br>
-[x] test that new client is in dynamic supervisor<br><br>
+**Single Test**<br>
+<br>
+[x] test that new client is in dynamic supervisor<br>
+<br>
 
 **Single Test (with children already present in dynamic supervisor)**<br>
 [ ] test that new client is in dynamic supervisor<br>
 [ ] test to register with already taken username<br>
-[ ] test that all children are in the dynamic supervisor<br><br>
+[ ] test that all children are in the dynamic supervisor<br>
+<br>
 
 **Multiples Tests**<br>
-[ ] do both tests above with 10, 100, 1000 children<br><br>
+[ ] do both tests above with 10, 100, 1000 children<br>
+<br>
 
 **Security Tests**<br>
 
@@ -93,7 +97,7 @@ BUG: Not returning form terminate<br>
 ## **5) Query**
 
 [x]Allow querying tweets subscribed to<br>
-[]tweets with specific hashtags<br>
+[x]tweets with specific hashtags<br>
 []tweets in which the user is mentioned (my mentions)<br>
 
 ### **Tests**

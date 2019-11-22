@@ -8,8 +8,11 @@ defmodule DySupervisor do
 
   # state = username, password, subscritionList, followersList, usersTweets, feedList
   def start_child(user_name, password) do
+    init_tweet = {"init feed tweet", "init_user"}
+
     child_spec =
-      Supervisor.child_spec({User, [user_name, password, ["testUser"], [], [], []]},
+      Supervisor.child_spec(
+        {User, [user_name, password, ["testUser"], [], [], [init_tweet]]},
         id: user_name,
         restart: :temporary
       )
@@ -149,7 +152,6 @@ defmodule User do
 
   @impl true
   def handle_cast({:goToClient}, state) do
-    IO.inspect(state, label: "in show main menu")
     showMainMenu(state)
 
     {:noreply, state}
@@ -198,19 +200,14 @@ defmodule User do
         username = Enum.at(state, 0)
         GenServer.cast(Engine, {:updateUser, username, new_state})
 
-      "s\n" ->
+      ###########################
+      "SendTweet\n" ->
         new_state = tweet(state)
         IO.inspect(new_state, label: "new state in showMainMenu")
         # tell engine to update their list and  my state
         username = Enum.at(state, 0)
         GenServer.cast(Engine, {:updateUser, username, new_state})
-
-      "sendTweet\n" ->
-        new_state = tweet(state)
-        IO.inspect(new_state, label: "new state in showMainMenu")
-        # tell engine to update their list and  my state
-        username = Enum.at(state, 0)
-        GenServer.cast(Engine, {:updateUser, username, new_state})
+        showMainMenu(new_state)
 
       "Tweet\n" ->
         new_state = tweet(state)
@@ -218,6 +215,50 @@ defmodule User do
         # tell engine to update their list and  my state
         username = Enum.at(state, 0)
         GenServer.cast(Engine, {:updateUser, username, new_state})
+        showMainMenu(new_state)
+
+      "sendTweet\n" ->
+        new_state = tweet(state)
+        IO.inspect(new_state, label: "new state in showMainMenu")
+        # tell engine to update their list and  my state
+        username = Enum.at(state, 0)
+        GenServer.cast(Engine, {:updateUser, username, new_state})
+        showMainMenu(new_state)
+
+      "tweet\n" ->
+        new_state = tweet(state)
+        IO.inspect(new_state, label: "new state in showMainMenu")
+        # tell engine to update their list and  my state
+        username = Enum.at(state, 0)
+        GenServer.cast(Engine, {:updateUser, username, new_state})
+        showMainMenu(new_state)
+
+      "send tweet\n" ->
+        new_state = tweet(state)
+        IO.inspect(new_state, label: "new state in showMainMenu")
+        # tell engine to update their list and  my state
+        username = Enum.at(state, 0)
+        GenServer.cast(Engine, {:updateUser, username, new_state})
+        showMainMenu(new_state)
+
+      ###########################
+
+      "check feed\n" ->
+        feed(state)
+        showMainMenu(state)
+
+      "c\n" ->
+        feed(state)
+        showMainMenu(state)
+
+      ###########################
+      "q\n" ->
+        query(state)
+        showMainMenu(state)
+
+      "query\n" ->
+        query(state)
+        showMainMenu(state)
     end
   end
 
@@ -355,29 +396,49 @@ defmodule User do
     _newState = [username, password, subscritionList, followersList, newTweetsList]
   end
 
-  def checkPassword(user_name, password) do
-    # check that username exists
-    kids = getChildren()
-    IO.inspect(kids, label: "kids")
-
-    # check if password is okay
-    if(Enum.member?(kids, [user_name, password])) do
-      true
-    else
-      # incorrect password
-      false
-    end
+  def feed(state) do
+    feedList = Enum.at(state, 5)
+    IO.inspect(feedList, label: "Your feed")
   end
 
-  def getChildren() do
-    # get children from Supervisor to see if it registered
-    children = DynamicSupervisor.which_children(DySupervisor)
+  def query(state) do
+    query1 = Mix.Shell.IO.prompt("What would you like to search?")
+    query = String.trim(query1)
 
-    for x <- children do
-      {_, pidx, _, _} = x
-      state = :sys.get_state(pidx)
-      IO.inspect(state, label: "Child")
+    # person
+    if String.contains?(query, "@") do
     end
+
+    # hashtag
+    if String.contains?(query, "#") do
+    end
+
+    feedList = Enum.at(state, 5)
+    IO.inspect(feedList)
+
+    # for every value in the feedlist, search the tweet than search the username
+    # if something interesting is found append it to results
+
+    results = []
+
+    results =
+      for x <- feedList do
+        {tweet, username} = x
+
+        if(String.contains?(tweet, query) == true) do
+          IO.inspect(tweet, label: "Found")
+          results = results ++ [{tweet, username}]
+        end
+
+        if(String.contains?(username, query) == true) do
+          IO.inspect(username, label: "Found")
+          results = results ++ [{tweet, username}]
+        end
+      end
+
+    IO.inspect(results, label: "found query")
+    # Enum.each(feedList, fn {tweet, username} ->
+    # end)
   end
 end
 
@@ -391,11 +452,7 @@ defmodule PROJ4 do
     # # supervisor for engine
     {:ok, _pid} = EngineSupervisor.start_link(1)
     EngineSupervisor.start_child([])
-    # children = [
-    #   {Engine, name: Engine}
-    # ]
-    #
-    # {:ok, _pid} = Supervisor.start_link(children, strategy: :one_for_one)
+
     # ask for login or register
     action = Mix.Shell.IO.prompt("Log In or Register?")
 
@@ -425,14 +482,14 @@ defmodule PROJ4 do
         loginUser()
 
       "test\n" ->
-        testSendTweet()
+        test()
     end
 
     # :registered
     Supervisor.start_link([], strategy: :one_for_one)
   end
 
-  def testSendTweet() do
+  def test() do
     # make a bunch of kids
     makeKids(6)
 

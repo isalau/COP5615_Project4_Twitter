@@ -85,7 +85,7 @@ BUG: Not returning form terminate<br>
 [x] if they exists check not in your subscription list<br>
 [x] if they exists add to subscription list<br>
 [x] if they exists say you are subscribed<br>
-[] if they add user to subscribed user's followers list<br>
+[x] if they add user to subscribed user's followers list<br>
 [x] if not say that person is not a current user<br>
 
 ### **Tests**
@@ -99,6 +99,10 @@ BUG: Not returning form terminate<br>
 ### **Tests**
 
 ## **6) Deliver Tweet Immediately**
+
+--> user selected feed from menu<br>
+[x]for every subscriber in followers usersLists<br>
+[]send tweet message from engine<br>
 
 ### **Tests**
 

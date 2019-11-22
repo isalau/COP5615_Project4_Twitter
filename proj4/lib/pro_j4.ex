@@ -6,9 +6,10 @@ defmodule DySupervisor do
     {:ok, _pid} = DynamicSupervisor.start_link(__MODULE__, init_arg, name: __MODULE__)
   end
 
+  # state = username, password, subscritionList, followersList, usersTweets
   def start_child(user_name, password) do
     child_spec =
-      Supervisor.child_spec({User, [user_name, password, [], [], []]},
+      Supervisor.child_spec({User, [user_name, password, ["testUser"], [], []]},
         id: user_name,
         restart: :temporary
       )
@@ -46,8 +47,6 @@ defmodule Engine do
   def start_link(state) do
     GenServer.start_link(__MODULE__, state, name: __MODULE__)
   end
-
-  ## Callbacks
 
   @impl true
   def init(stack) do
@@ -95,6 +94,17 @@ defmodule Engine do
   end
 
   @impl true
+  def handle_cast({:sendTweet, username, tweet, subscribers}, state) do
+    # for every subscriber in followers usersLists
+    Enum.each(subscribers, fn follower ->
+      # send tweet message
+      GenServer.cast(:"#{follower}", {:getTweet, username, tweet})
+    end)
+
+    {:noreply, state}
+  end
+
+  @impl true
   def handle_cast({:push, head}, tail) do
     {:noreply, [head | tail]}
   end
@@ -137,10 +147,17 @@ defmodule User do
     {:noreply, newState}
   end
 
+  @impl true
   def handle_cast({:goToClient}, state) do
     IO.inspect(state, label: "in show main menu")
     showMainMenu(state)
 
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:getTweet, username, tweet}, state) do
+    IO.inspect(tweet, label: "Got tweet from #{username}")
     {:noreply, state}
   end
 
@@ -313,10 +330,17 @@ defmodule User do
     username = Enum.at(state, 0)
     password = Enum.at(state, 1)
     subscritionList = Enum.at(state, 2)
-    followersList = Enum.at(state, 3)
+    _followersList = Enum.at(state, 3)
     tweetsList = Enum.at(state, 4)
-    tweet = Mix.Shell.IO.prompt("What would you like to tweet?")
+
+    tweet1 = Mix.Shell.IO.prompt("What would you like to tweet?")
+    tweet = String.trim(tweet1)
+    # FOR TESTING
+    followersList = ["child1", "child2", "child3", "child4", "child5", "child6"]
+
+    GenServer.cast(Engine, {:sendTweet, username, tweet, followersList})
     IO.inspect(tweet, label: "You tweeted")
+
     newTweetsList = tweetsList ++ [tweet]
     _newState = [username, password, subscritionList, followersList, newTweetsList]
   end
@@ -344,10 +368,6 @@ defmodule User do
       state = :sys.get_state(pidx)
       IO.inspect(state, label: "Child")
     end
-  end
-
-  def sendTweet(msg, _myself, follower) do
-    GenServer.call(follower, {:readTweet, msg})
   end
 end
 

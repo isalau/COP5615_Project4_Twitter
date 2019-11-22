@@ -156,7 +156,7 @@ defmodule User do
   end
 
   @impl true
-  def handle_cast({:getTweet, username, tweet}, state) do
+  def handle_cast({:getTweet, tweeter, tweet}, state) do
     # IO.inspect(tweet, label: "Got tweet from #{username}")
     username = Enum.at(state, 0)
     password = Enum.at(state, 1)
@@ -165,7 +165,7 @@ defmodule User do
     tweetsList = Enum.at(state, 4)
     feedList = Enum.at(state, 5)
 
-    newFeedsList = feedList ++ [tweet]
+    newFeedsList = feedList ++ [{tweet, tweeter}]
     newState = [username, password, subscritionList, followersList, tweetsList, newFeedsList]
     IO.inspect(newState, label: "New tweet received")
     {:noreply, newState}

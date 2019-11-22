@@ -33,7 +33,7 @@ defmodule EngineSupervisor do
     {:ok, _pid} = DynamicSupervisor.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  def start_child(opts) do
+  def start_child(_opts) do
     init_tweet = {"init feed tweet #testing123", "childtest"}
 
     child_spec =
@@ -65,7 +65,7 @@ defmodule Engine do
 
     usersLists =
       Enum.flat_map(state, fn [uPL, _aT] ->
-        {username, password} = uPL
+        {username, _password} = uPL
         [username]
       end)
 
@@ -83,7 +83,6 @@ defmodule Engine do
     allTweetsList = Enum.at(state, 1)
     new_state = [newusernamePasswordTuple, allTweetsList]
 
-    new_state = state ++ [[username, password]]
     {:noreply, new_state}
   end
 
@@ -131,7 +130,7 @@ defmodule Engine do
 
         if(String.contains?(tweet, query) == true) do
           IO.inspect(tweet, label: "Found In Engine")
-          results = results ++ [{tweet, username}]
+          _results = results ++ [{tweet, username}]
         end
       end
 
@@ -154,7 +153,7 @@ defmodule Engine do
 
         if(String.contains?(username, query) == true) do
           IO.inspect(username, label: "Found In Engine")
-          results = results ++ [{tweet, username}]
+          _results = results ++ [{tweet, username}]
         end
       end
 
@@ -309,6 +308,15 @@ defmodule User do
       "query\n" ->
         query(state)
         showMainMenu(state)
+
+      ###########################
+      "r\n" ->
+        retweet(state)
+        showMainMenu(state)
+
+      "retweet\n" ->
+        retweet(state)
+        showMainMenu(state)
     end
   end
 
@@ -451,6 +459,20 @@ defmodule User do
     IO.inspect(feedList, label: "Your feed")
   end
 
+  def retweet(state) do
+    feedList = Enum.at(state, 5)
+    indexedFeedList = Enum.with_index(feedList)
+    numberedFeedList = []
+
+    numberedFeedList =
+      for x <- indexedFeedList do
+        {tweet, index} = x
+        _numberedFeedList = numberedFeedList ++ [index, tweet]
+      end
+
+    IO.inspect(numberedFeedList, label: "Your feed")
+  end
+
   def query(state) do
     query1 = Mix.Shell.IO.prompt("What would you like to search?")
     query = String.trim(query1)
@@ -458,7 +480,7 @@ defmodule User do
     # person
     if String.contains?(query, "@") do
       # go to engine
-      {at, name} = String.split_at(query, 1)
+      {_at, name} = String.split_at(query, 1)
       GenServer.cast(Engine, {:findPerson, name})
     else
       # hashtag
@@ -481,12 +503,12 @@ defmodule User do
 
             if(String.contains?(tweet, query) == true) do
               IO.inspect(tweet, label: "Found")
-              results = results ++ [{tweet, username}]
+              _results = results ++ [{tweet, username}]
             end
 
             if(String.contains?(username, query) == true) do
               IO.inspect(username, label: "Found")
-              results = results ++ [{tweet, username}]
+              _results = results ++ [{tweet, username}]
             end
           end
 

@@ -32,7 +32,7 @@ defmodule EngineSupervisor do
   end
 
   def start_child(_opts) do
-    init_tweet = {"init feed tweet #testing123", "childtest"}
+    # init_tweet = {"init feed tweet #testing123", "childtest"}
 
     # state = [[username, password, subscritionList, followersList, usersTweets, feedList],[username, password, subscritionList, followersList, usersTweets, feedList],[username, password, subscritionList, followersList, usersTweets, feedList]]
     child_spec = Supervisor.child_spec({Engine, []}, id: :engine, restart: :temporary)
@@ -632,11 +632,11 @@ defmodule PROJ4 do
       IO.puts("Your new username is #{user_name} and your account was created")
       IO.puts("Please Log In For First Time")
       # :goToLogin
-      # loginUser()
+      loginUser()
     else
       IO.puts("Passwords did not match please try again")
       # :registerFailed
-      # registerPassword(user_name)
+      registerPassword(user_name)
     end
   end
 
@@ -649,14 +649,14 @@ defmodule PROJ4 do
 
     # check that username exists
     kids = getChildren()
-    IO.inspect(kids, label: "kids")
+    # IO.inspect(kids, label: "kids")
 
     usernameLists = Enum.flat_map(kids, fn [user_name, _x] -> [user_name] end)
-    IO.inspect(usernameLists, label: "usernameLists")
+    # IO.inspect(usernameLists, label: "usernameLists")
 
     if userName in usernameLists do
       if checkPassword(userName, password) == true do
-        goToClient(userName)
+        # goToClient(userName)
       else
         IO.inspect(userName, label: "1 Incorrect username or password. Please try again.")
         loginUser()
@@ -670,7 +670,7 @@ defmodule PROJ4 do
   def checkPassword(user_name, password) do
     # check that username exists
     kids = getChildren()
-    IO.inspect(kids, label: "kids")
+    # IO.inspect(kids, label: "kids")
 
     # check if password is okay
     if(Enum.member?(kids, [user_name, password])) do

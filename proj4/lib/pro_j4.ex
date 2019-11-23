@@ -567,15 +567,21 @@ defmodule PROJ4 do
     {:ok, _pid} = EngineSupervisor.start_link(1)
     EngineSupervisor.start_child([])
 
+    enterTwitter()
+
+    # Supervisor.start_link([], strategy: :one_for_one)
+  end
+
+  def enterTwitter() do
     # ask for login or register
     action = Mix.Shell.IO.prompt("Log In or Register?")
 
     case action do
       "Register\n" ->
-        registerUser()
+        registerUserName()
 
       "register\n" ->
-        registerUser()
+        registerUserName()
 
       "Log In\n" ->
         loginUser()
@@ -595,37 +601,39 @@ defmodule PROJ4 do
       "login\n" ->
         loginUser()
 
-      "test\n" ->
-        test()
+      _ ->
+        enterTwitter()
+        # "test\n" ->
+        #   test()
     end
 
     # :registered
-    Supervisor.start_link([], strategy: :one_for_one)
   end
 
-  def test() do
-    # make a bunch of kids
-    makeKids(6)
+  # def test() do
+  #   # make a bunch of kids
+  #   makeKids(6)
+  #
+  #   # register a specific user
+  #   DySupervisor.start_child("testUser", "t")
+  #   GenServer.cast(Engine, {:addUser, ["testUser", "t"]})
+  #
+  #   # make sure they are all there
+  #   kids = PROJ4.getChildren()
+  #   IO.inspect(kids)
+  #
+  #   # goToClient
+  #   goToClient("testUser")
+  # end
 
-    # register a specific user
-    DySupervisor.start_child("testUser", "t")
-    GenServer.cast(Engine, {:addUser, ["testUser", "t"]})
-
-    # make sure they are all there
-    kids = PROJ4.getChildren()
-    IO.inspect(kids)
-
-    # goToClient
-    goToClient("testUser")
-  end
-
-  def registerUser() do
+  def registerUserName() do
     user_name = Mix.Shell.IO.prompt("Please Create A UserName:")
     userName = String.trim(user_name)
-    createPassword(userName)
+    registerPassword(userName)
+    :registerComplete
   end
 
-  def createPassword(user_name) do
+  def registerPassword(user_name) do
     password1 = Mix.Shell.IO.prompt("Please Create A Password:")
     password2 = Mix.Shell.IO.prompt("Please Repeat Password For Verification:")
 
@@ -642,7 +650,7 @@ defmodule PROJ4 do
       loginUser()
     else
       IO.puts("Passwords did not match please try again")
-      createPassword(user_name)
+      registerPassword(user_name)
     end
   end
 
@@ -673,31 +681,6 @@ defmodule PROJ4 do
     end
   end
 
-  def checkPassword1(user_name) do
-    password1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
-    password = String.trim(password1)
-
-    # check that username exists
-    kids = getChildren()
-    IO.inspect(kids, label: "kids")
-
-    usernameLists = Enum.flat_map(kids, fn [user_name, _x] -> [user_name] end)
-    IO.inspect(usernameLists, label: "usernameLists")
-
-    if user_name in usernameLists do
-      # check if password is okay
-      if(Enum.member?(kids, [user_name, password])) do
-        showMainMenu()
-      else
-        IO.inspect(user_name, label: "Incorrect username or password. Please try again.")
-        loginUser()
-      end
-    else
-      IO.inspect(user_name, label: "Incorrect username or password. Please try again.")
-      loginUser()
-    end
-  end
-
   def checkPassword(user_name, password) do
     # check that username exists
     kids = getChildren()
@@ -717,10 +700,6 @@ defmodule PROJ4 do
     GenServer.cast(:"#{userName}", {:goToClient})
   end
 
-  def showMainMenu() do
-    IO.puts("In wrong show main menu")
-  end
-
   def getChildren() do
     # get children from Supervisor to see if it registered
     children = DynamicSupervisor.which_children(DySupervisor)
@@ -730,37 +709,5 @@ defmodule PROJ4 do
       _state = :sys.get_state(pidx)
       # IO.inspect(state, label: "Child")
     end
-  end
-
-  def makeManyKids(num) do
-    # start dynamic supervisor
-    {:ok, _pid} = DySupervisor.start_link(1)
-
-    makeKids(num)
-  end
-
-  def makeKids(num) when num > 1 do
-    # IO.puts("making kids")
-
-    # start a child
-    numm = Integer.to_string(num)
-    username = String.replace_suffix("child x", " x", numm)
-    DySupervisor.start_child(username, num)
-
-    GenServer.cast(Engine, {:addUser, [username, num]})
-    newNum = num - 1
-    makeKids(newNum)
-  end
-
-  def makeKids(num) do
-    # IO.puts("made kids")
-
-    # start a child
-    numm = Integer.to_string(num)
-    username = String.replace_suffix("child x", " x", numm)
-    DySupervisor.start_child(username, num)
-
-    GenServer.cast(Engine, {:addUser, [username, num]})
-    :registered
   end
 end

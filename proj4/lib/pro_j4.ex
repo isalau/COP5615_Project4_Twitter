@@ -610,22 +610,6 @@ defmodule PROJ4 do
     # :registered
   end
 
-  # def test() do
-  #   # make a bunch of kids
-  #   makeKids(6)
-  #
-  #   # register a specific user
-  #   DySupervisor.start_child("testUser", "t")
-  #   GenServer.cast(Engine, {:addUser, ["testUser", "t"]})
-  #
-  #   # make sure they are all there
-  #   kids = PROJ4.getChildren()
-  #   IO.inspect(kids)
-  #
-  #   # goToClient
-  #   goToClient("testUser")
-  # end
-
   def registerUserName() do
     user_name = Mix.Shell.IO.prompt("Please Create A UserName:")
     userName = String.trim(user_name)
@@ -710,4 +694,20 @@ defmodule PROJ4 do
       # IO.inspect(state, label: "Child")
     end
   end
+
+  # def test() do
+  #   # make a bunch of kids
+  #   makeKids(6)
+  #
+  #   # register a specific user
+  #   DySupervisor.start_child("testUser", "t")
+  #   GenServer.cast(Engine, {:addUser, ["testUser", "t"]})
+  #
+  #   # make sure they are all there
+  #   kids = PROJ4.getChildren()
+  #   IO.inspect(kids)
+  #
+  #   # goToClient
+  #   goToClient("testUser")
+  # end
 end

@@ -48,6 +48,7 @@ end
 defmodule Engine do
   use GenServer
   # state has all the current {usernames, passwords}, allTweets
+  # state = username, password, subscritionList, followersList, usersTweets
   def start_link(state) do
     GenServer.start_link(__MODULE__, state, name: __MODULE__)
   end
@@ -99,6 +100,24 @@ defmodule Engine do
     # call user back to update their state
     GenServer.cast(:"#{username}", {:updateState, new_state})
     {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:removeUser, user_state}, state) do
+    user_name = Enum.at(user_state, 0)
+
+    new_state = state
+
+    new_state =
+      for x <- state do
+        [username, password, _subscritionList, _followersList, _usersTweets, _usersTweets] = x
+
+        if(username == user_state) do
+          _newList = List.delete(state, x)
+        end
+      end
+
+    {:noreply, new_state}
   end
 
   @impl true
@@ -166,8 +185,6 @@ end
 defmodule User do
   use GenServer
 
-  # state = username, password, subscritionList, followersList, usersTweets
-
   def start_link(args) do
     user_name = Enum.at(args, 0)
     IO.inspect(user_name, label: "username for new client")
@@ -203,7 +220,6 @@ defmodule User do
   @impl true
   def handle_cast({:goToClient}, state) do
     showMainMenu(state)
-
     {:noreply, state}
   end
 
@@ -230,12 +246,19 @@ defmodule User do
       )
 
     case action do
+      "D\n" ->
+        deleteUser(state)
+
+      "d\n" ->
+        deleteUser(state)
+
       "Delete\n" ->
         deleteUser(state)
 
       "delete\n" ->
         deleteUser(state)
 
+      ###########################
       "Subscribe\n" ->
         new_state = subscribeToUser(state)
         IO.inspect(new_state, label: "new state in showMainMenu")
@@ -318,11 +341,14 @@ defmodule User do
       "retweet\n" ->
         retweet(state)
         showMainMenu(state)
+
+      _ ->
+        showMainMenu(state)
     end
   end
 
   def deleteUser(state) do
-    IO.inspect(state, label: "State")
+    # IO.inspect(state, label: "State")
     answer = Mix.Shell.IO.prompt("Are you sure you would like to delete your account?")
 
     case answer do
@@ -366,25 +392,12 @@ defmodule User do
     case confirm do
       "Yes\n" ->
         # delete from supervisor and log out
-        dpid = Process.whereis(DySupervisor)
-        val = Process.alive?(dpid)
-        IO.inspect(val, label: "test if sup is alive")
-        userName = Enum.at(state, 0)
-        pid = GenServer.whereis(:"#{userName}")
-        IO.inspect(pid, label: "deleting child")
-        DynamicSupervisor.terminate_child(dpid, pid)
-        IO.puts("Account Deleted. Goodbye.")
+        # deleteFromSupervisor(state)
+        deleteFromEngine(state)
 
       "yes\n" ->
-        # delete from supervisor and log out
-        dpid = Process.whereis(DySupervisor)
-        val = Process.alive?(dpid)
-        IO.inspect(val, label: "test if sup is alive")
-        userName = Enum.at(state, 0)
-        pid = GenServer.whereis(:"#{userName}")
-        IO.inspect(pid, label: "deleting child")
-        DynamicSupervisor.terminate_child(dpid, pid)
-        IO.puts("Account Deleted. Goodbye.")
+        # deleteFromSupervisor(state)
+        deleteFromEngine(state)
 
       "No\n" ->
         showMainMenu(state)
@@ -392,6 +405,22 @@ defmodule User do
       "no\n" ->
         showMainMenu(state)
     end
+  end
+
+  def deleteFromSupervisor(state) do
+    dpid = Process.whereis(DySupervisor)
+    # val = Process.alive?(dpid)
+    userName = Enum.at(state, 0)
+    pid = GenServer.whereis(:"#{userName}")
+    IO.inspect(pid, label: "deleting child")
+    DynamicSupervisor.terminate_child(dpid, pid)
+    IO.puts("Account Deleted From Supervisor.")
+  end
+
+  def deleteFromEngine(state) do
+    # find account in engine
+    GenServer.cast(Engine, {:removeUser, state})
+    IO.puts("Account Deleted From Engine.")
   end
 
   def subscribeToUser(state) do
@@ -656,7 +685,7 @@ defmodule PROJ4 do
 
     if userName in usernameLists do
       if checkPassword(userName, password) == true do
-        # goToClient(userName)
+        goToClient(userName)
       else
         IO.inspect(userName, label: "1 Incorrect username or password. Please try again.")
         loginUser()
@@ -682,7 +711,7 @@ defmodule PROJ4 do
   end
 
   def goToClient(userName) do
-    IO.inspect(userName, label: "in goToClient")
+    # IO.inspect(userName, label: "in goToClient")
     GenServer.cast(:"#{userName}", {:goToClient})
   end
 

@@ -9,10 +9,10 @@ defmodule PROJ4Test do
   describe "register tests" do
     # **Single Test**<br><br>
     # [x] test that new client is in dynamic supervisor<br><br>
-    # test "register user" do
-    #   IO.inspect("Register one user")
-    #   assert PROJ4.registerUserName() == :registerComplete
-    # end
+    test "register user" do
+      IO.inspect("Register one user")
+      assert PROJ4.registerPassword("testUser1") == :goToLogin
+    end
 
     #
     # **Single Test (with children already present in dynamic supervisor)**<br>

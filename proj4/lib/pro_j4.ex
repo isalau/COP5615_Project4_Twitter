@@ -6,13 +6,11 @@ defmodule DySupervisor do
     {:ok, _pid} = DynamicSupervisor.start_link(__MODULE__, init_arg, name: __MODULE__)
   end
 
-  # state = username, password, subscritionList, followersList, usersTweets, feedList
+  # state = [username, password]
   def start_child(user_name, password) do
-    init_tweet = {"init feed tweet #testing123", "init_user"}
-
     child_spec =
       Supervisor.child_spec(
-        {User, [user_name, password, ["testUser"], [], [], [init_tweet]]},
+        {User, [user_name, password]},
         id: user_name,
         restart: :temporary
       )
@@ -36,8 +34,8 @@ defmodule EngineSupervisor do
   def start_child(_opts) do
     init_tweet = {"init feed tweet #testing123", "childtest"}
 
-    child_spec =
-      Supervisor.child_spec({Engine, [[], [init_tweet]]}, id: :engine, restart: :temporary)
+    # state = [[username, password, subscritionList, followersList, usersTweets, feedList],[username, password, subscritionList, followersList, usersTweets, feedList],[username, password, subscritionList, followersList, usersTweets, feedList]]
+    child_spec = Supervisor.child_spec({Engine, []}, id: :engine, restart: :temporary)
 
     {:ok, _child} = DynamicSupervisor.start_child(__MODULE__, child_spec)
   end
@@ -77,11 +75,14 @@ defmodule Engine do
   @impl true
   def handle_cast({:addUser, [username, password]}, state) do
     # IO.inspect("in engine add user")
+    # CSSA = [username, password, subscritionList, followersList, usersTweets, feedList]
 
-    usernamePasswordTuple = Enum.at(state, 0)
-    newusernamePasswordTuple = usernamePasswordTuple ++ [{username, password}]
-    allTweetsList = Enum.at(state, 1)
-    new_state = [newusernamePasswordTuple, allTweetsList]
+    newCSSA = [[username, password, [], [], [], []]]
+    new_state = state ++ newCSSA
+    # usernamePasswordTuple = Enum.at(state, 0)
+    # newusernamePasswordTuple = usernamePasswordTuple ++ [{username, password}]
+    # allTweetsList = Enum.at(state, 1)
+    # new_state = [newusernamePasswordTuple, allTweetsList]
 
     {:noreply, new_state}
   end
@@ -567,44 +568,45 @@ defmodule PROJ4 do
     {:ok, _pid} = EngineSupervisor.start_link(1)
     EngineSupervisor.start_child([])
 
-    # enterTwitter()
+    enterTwitter()
 
-    # Supervisor.start_link([], strategy: :one_for_one)
+    Supervisor.start_link([], strategy: :one_for_one)
   end
 
   def enterTwitter() do
     # ask for login or register
     action = Mix.Shell.IO.prompt("Log In or Register?")
 
-    # case action do
-    #   "Register\n" ->
-    #     registerUserName()
-    #
-    #   "register\n" ->
-    #     registerUserName()
-    #
-    #   "Log In\n" ->
-    #     loginUser()
-    #
-    #   "LogIn\n" ->
-    #     loginUser()
-    #
-    #   "log In\n" ->
-    #     loginUser()
-    #
-    #   "logIn\n" ->
-    #     loginUser()
-    #
-    #   "log in\n" ->
-    #     loginUser()
-    #
-    #   "login\n" ->
-    #     loginUser()
-    #
-    #   _ ->
-    #     enterTwitter()
-    # end
-    :showLogIn
+    case action do
+      "Register\n" ->
+        registerUserName()
+
+      "register\n" ->
+        registerUserName()
+
+      "Log In\n" ->
+        loginUser()
+
+      "LogIn\n" ->
+        loginUser()
+
+      "log In\n" ->
+        loginUser()
+
+      "logIn\n" ->
+        loginUser()
+
+      "log in\n" ->
+        loginUser()
+
+      "login\n" ->
+        loginUser()
+
+      _ ->
+        enterTwitter()
+    end
+
+    # :showLogIn
     # :registered
   end
 
@@ -612,7 +614,7 @@ defmodule PROJ4 do
     user_name = Mix.Shell.IO.prompt("Please Create A UserName:")
     userName = String.trim(user_name)
     registerPassword(userName)
-    :registerComplete
+    # :registerComplete
   end
 
   def registerPassword(user_name) do
@@ -629,10 +631,12 @@ defmodule PROJ4 do
 
       IO.puts("Your new username is #{user_name} and your account was created")
       IO.puts("Please Log In For First Time")
-      loginUser()
+      # :goToLogin
+      # loginUser()
     else
       IO.puts("Passwords did not match please try again")
-      registerPassword(user_name)
+      # :registerFailed
+      # registerPassword(user_name)
     end
   end
 

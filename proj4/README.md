@@ -50,7 +50,7 @@
 [x] if yes; ask user for password<br>
 [x] passed password check: ask again if they want to delete<br>
 [x] if yes; terminate account from the supervisor<br>
-BUG: Not returning form terminate<br>
+BUG: Not returning from terminate<br>
 [] if yes; exit application<br>
 [x] if no; go back to main menu<br>
 [] after failed password 3 attempts they have to wait 24 hours until they can try to delete again<br>
@@ -60,7 +60,7 @@ BUG: Not returning form terminate<br>
 [] Test user is gone from dynamic supervisor<br>
 [] Test user cannot log in<br>
 [] Test other users cannot @ them<br>
-[] Test user's tweets are gone<br>
+[] Test users' tweets are gone<br>
 
 ## **2) Send Tweet**
 
@@ -72,6 +72,11 @@ BUG: Not returning form terminate<br>
 [x] go back to main menu<br>
 
 ### **Tests**
+[] Test tweet is saved to users tweet list<br>
+[] Test subscribers see users tweet in feed<br>
+[] Test having 10 clients tweet at same time<br>
+[] Test having 100 clients tweet at same time<br>
+[] Test having 1000 clients tweet at same time<br>
 
 ## **3) Subscribe**
 
@@ -85,6 +90,13 @@ BUG: Not returning form terminate<br>
 [x] if not say that person is not a current user<br>
 
 ### **Tests**
+[] Test your subscribe lists updates and you are on others followers list<br>
+[] Test one user getting 10 new subscribers at same time<br>
+[] Test one user getting 100 new subscribers at same time<br>
+[] Test one user getting 1000 new subscribers at same time<br>
+[] Test one user subscribing to 10 others quickly<br>
+[] Test one user subscribing to 100 others quickly<br>
+[] Test one user subscribing to 1000 others quickly<br>
 
 ## **4) Re-Tweet**
 [x]Show user's feed with numbers <br>
@@ -92,6 +104,11 @@ BUG: Not returning form terminate<br>
 [x]Add re-tweet to own tweets<br>
 
 ### **Tests**
+[] Test tweet is saved to users retweet list<br>
+[] Test subscribers see users retweet in feed<br>
+[] Test having 10 clients retweet at same time<br>
+[] Test having 100 clients retweet at same time<br>
+[] Test having 1000 clients retweet at same time<br>
 
 ## **5) Query**
 
@@ -100,6 +117,11 @@ BUG: Not returning form terminate<br>
 [x]tweets in which the user is mentioned (my mentions)<br>
 
 ### **Tests**
+[] Test query for something that exists<br>
+[] Test query for something that does not exists<br>
+[] Test having 10 clients query at same time<br>
+[] Test having 100 clients query at same time<br>
+[] Test having 1000 clients query at same time<br>
 
 ## **6) Deliver Tweet Immediately**
 
@@ -110,7 +132,7 @@ BUG: Not returning form terminate<br>
 [x]show tweets on feed<br>
 
 ### **Tests**
-
+[] Test tweet shows up one feed immediately<br>
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed by adding `proj4` to your list of dependencies in `mix.exs`:

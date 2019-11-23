@@ -2,13 +2,17 @@ defmodule PROJ4Test do
   use ExUnit.Case
   doctest PROJ4
 
+  test "show login screen" do
+    assert PROJ4.enterTwitter() == :showLogIn
+  end
+
   describe "register tests" do
     # **Single Test**<br><br>
     # [x] test that new client is in dynamic supervisor<br><br>
-    test "register user" do
-      IO.inspect("Register one user")
-      assert PROJ4.registerUserName() == :registerComplete
-    end
+    # test "register user" do
+    #   IO.inspect("Register one user")
+    #   assert PROJ4.registerUserName() == :registerComplete
+    # end
 
     #
     # **Single Test (with children already present in dynamic supervisor)**<br>

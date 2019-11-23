@@ -567,7 +567,7 @@ defmodule PROJ4 do
     {:ok, _pid} = EngineSupervisor.start_link(1)
     EngineSupervisor.start_child([])
 
-    enterTwitter()
+    # enterTwitter()
 
     # Supervisor.start_link([], strategy: :one_for_one)
   end
@@ -576,37 +576,35 @@ defmodule PROJ4 do
     # ask for login or register
     action = Mix.Shell.IO.prompt("Log In or Register?")
 
-    case action do
-      "Register\n" ->
-        registerUserName()
-
-      "register\n" ->
-        registerUserName()
-
-      "Log In\n" ->
-        loginUser()
-
-      "LogIn\n" ->
-        loginUser()
-
-      "log In\n" ->
-        loginUser()
-
-      "logIn\n" ->
-        loginUser()
-
-      "log in\n" ->
-        loginUser()
-
-      "login\n" ->
-        loginUser()
-
-      _ ->
-        enterTwitter()
-        # "test\n" ->
-        #   test()
-    end
-
+    # case action do
+    #   "Register\n" ->
+    #     registerUserName()
+    #
+    #   "register\n" ->
+    #     registerUserName()
+    #
+    #   "Log In\n" ->
+    #     loginUser()
+    #
+    #   "LogIn\n" ->
+    #     loginUser()
+    #
+    #   "log In\n" ->
+    #     loginUser()
+    #
+    #   "logIn\n" ->
+    #     loginUser()
+    #
+    #   "log in\n" ->
+    #     loginUser()
+    #
+    #   "login\n" ->
+    #     loginUser()
+    #
+    #   _ ->
+    #     enterTwitter()
+    # end
+    :showLogIn
     # :registered
   end
 

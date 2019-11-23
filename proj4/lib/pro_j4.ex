@@ -48,7 +48,7 @@ end
 defmodule Engine do
   use GenServer
   # state has all the current {usernames, passwords}, allTweets
-  # state = username, password, subscritionList, followersList, usersTweets
+  # state = username, password, subscritionList, followersList, usersTweets,feedList
   def start_link(state) do
     GenServer.start_link(__MODULE__, state, name: __MODULE__)
   end
@@ -121,17 +121,38 @@ defmodule Engine do
   end
 
   @impl true
-  def handle_cast({:sendTweet, username, tweet, subscribers}, state) do
+  def handle_cast({:sendTweet, userName, tweet}, state) do
+    followersList =
+      for x <- state do
+        [username, password, _subscritionList, followersList, _usersTweets, _feedList] = x
+
+        if(userName == username) do
+          followersList
+        end
+      end
+
+    # FOR TESTING
+    followersList = ["child1", "child2", "child3", "child4", "child5", "child6"]
+
     # for every subscriber in followers usersLists
-    Enum.each(subscribers, fn follower ->
+    Enum.each(followersList, fn follower ->
       # send tweet message
-      GenServer.cast(:"#{follower}", {:getTweet, username, tweet})
+      GenServer.cast(:"#{follower}", {:getTweet, userName, tweet})
     end)
 
-    usernamePasswordTuple = Enum.at(state, 0)
-    allTweetsList = Enum.at(state, 1)
-    newallTweetsList = allTweetsList ++ {tweet, username}
-    new_state = [usernamePasswordTuple, newallTweetsList]
+    # update users tweets
+    new_state = state
+
+    new_state =
+      for x <- state do
+        [username, password, subscritionList, followersList, usersTweets, feedList] = x
+
+        if(username == userName) do
+          usersNewTweets = usersTweets ++ [tweet]
+          x = [username, password, subscritionList, followersList, usersNewTweets, feedList]
+        end
+      end
+
     {:noreply, new_state}
   end
 
@@ -240,6 +261,8 @@ defmodule User do
   end
 
   def showMainMenu(state) do
+    showEngine()
+
     action =
       Mix.Shell.IO.prompt(
         "Would you like to:\n Delete account\n Send tweet\n Subscribe to user\n Re-tweet\n Query\n Check Feed\n"
@@ -278,40 +301,40 @@ defmodule User do
         new_state = tweet(state)
         IO.inspect(new_state, label: "new state in showMainMenu")
         # tell engine to update their list and  my state
-        username = Enum.at(state, 0)
-        GenServer.cast(Engine, {:updateUser, username, new_state})
+        # username = Enum.at(state, 0)
+        # GenServer.cast(Engine, {:updateUser, username, new_state})
         showMainMenu(new_state)
 
       "Tweet\n" ->
         new_state = tweet(state)
         IO.inspect(new_state, label: "new state in showMainMenu")
         # tell engine to update their list and  my state
-        username = Enum.at(state, 0)
-        GenServer.cast(Engine, {:updateUser, username, new_state})
+        # username = Enum.at(state, 0)
+        # GenServer.cast(Engine, {:updateUser, username, new_state})
         showMainMenu(new_state)
 
       "sendTweet\n" ->
         new_state = tweet(state)
         IO.inspect(new_state, label: "new state in showMainMenu")
         # tell engine to update their list and  my state
-        username = Enum.at(state, 0)
-        GenServer.cast(Engine, {:updateUser, username, new_state})
+        # username = Enum.at(state, 0)
+        # GenServer.cast(Engine, {:updateUser, username, new_state})
         showMainMenu(new_state)
 
       "tweet\n" ->
         new_state = tweet(state)
         IO.inspect(new_state, label: "new state in showMainMenu")
         # tell engine to update their list and  my state
-        username = Enum.at(state, 0)
-        GenServer.cast(Engine, {:updateUser, username, new_state})
+        # username = Enum.at(state, 0)
+        # GenServer.cast(Engine, {:updateUser, username, new_state})
         showMainMenu(new_state)
 
       "send tweet\n" ->
         new_state = tweet(state)
         IO.inspect(new_state, label: "new state in showMainMenu")
         # tell engine to update their list and  my state
-        username = Enum.at(state, 0)
-        GenServer.cast(Engine, {:updateUser, username, new_state})
+        # username = Enum.at(state, 0)
+        # GenServer.cast(Engine, {:updateUser, username, new_state})
         showMainMenu(new_state)
 
       ###########################
@@ -468,20 +491,15 @@ defmodule User do
   def tweet(state) do
     username = Enum.at(state, 0)
     password = Enum.at(state, 1)
-    subscritionList = Enum.at(state, 2)
-    _followersList = Enum.at(state, 3)
-    tweetsList = Enum.at(state, 4)
 
     tweet1 = Mix.Shell.IO.prompt("What would you like to tweet?")
     tweet = String.trim(tweet1)
-    # FOR TESTING
-    followersList = ["child1", "child2", "child3", "child4", "child5", "child6"]
 
-    GenServer.cast(Engine, {:sendTweet, username, tweet, followersList})
+    GenServer.cast(Engine, {:sendTweet, username, tweet})
     IO.inspect(tweet, label: "You tweeted")
 
-    newTweetsList = tweetsList ++ [tweet]
-    _newState = [username, password, subscritionList, followersList, newTweetsList]
+    # newTweetsList = tweetsList ++ [tweet]
+    # _newState = [username, password, subscritionList, followersList, newTweetsList]
   end
 
   def feed(state) do
@@ -583,6 +601,13 @@ defmodule User do
         # end)
       end
     end
+  end
+
+  def showEngine() do
+    epid = Process.whereis(Engine)
+    IO.inspect(epid, label: "engine pid")
+    state = :sys.get_state(epid)
+    IO.inspect(state, label: "Engine")
   end
 end
 

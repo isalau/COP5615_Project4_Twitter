@@ -699,7 +699,7 @@ defmodule PROJ4 do
     {:ok, _pid} = EngineSupervisor.start_link(1)
     EngineSupervisor.start_child([])
 
-    enterTwitter()
+    # enterTwitter()
 
     Supervisor.start_link([], strategy: :one_for_one)
   end

@@ -2,27 +2,51 @@ defmodule PROJ4Test do
   use ExUnit.Case
   doctest PROJ4
 
-  test "show login screen" do
-    assert PROJ4.enterTwitter() == :showLogIn
+  setup do
+    # make a bunch of kids
+    PROJ4.makeKids(6)
+
+    # register a specific user
+    DySupervisor.start_child("testUser", "t")
+    GenServer.cast(Engine, {:addUser, ["testUser", "t"]})
+
+    # make sure they are all there
+    kids = PROJ4.getChildren()
+    IO.inspect(kids)
+
+    # goToClient
+    # goToClient("testUser")
   end
 
-  describe "register tests" do
-    # **Single Test**<br><br>
-    # [x] test that new client is in dynamic supervisor<br><br>
-    test "register user" do
-      IO.inspect("Register one user")
-      assert PROJ4.registerPassword("testUser1") == :goToLogin
-    end
+  # test "goToClient" do
+  #   PROJ4.goToClient("testUser")
+  # end
 
-    #
-    # **Single Test (with children already present in dynamic supervisor)**<br>
-    # [ ] test that new client is in dynamic supervisor<br>
-    # [ ] test to register with already taken username<br>
-    # [ ] test that all children are in the dynamic supervisor<br><br>
-    #
-    # **Multiples Tests**<br>
-    # [ ] do both tests above with 10, 100, 1000 children<br><br>
+  test "check correct username" do
+    PROJ4.loginUser()
   end
+
+  # test "show login screen" do
+  #   assert PROJ4.enterTwitter() == :showLogIn
+  # end
+  #
+  # describe "register tests" do
+  #   # **Single Test**<br><br>
+  #   # [x] test that new client is in dynamic supervisor<br><br>
+  #   test "register user" do
+  #     IO.inspect("Register one user")
+  #     assert PROJ4.registerPassword("testUser1") == :goToLogin
+  #   end
+
+  #
+  # **Single Test (with children already present in dynamic supervisor)**<br>
+  # [ ] test that new client is in dynamic supervisor<br>
+  # [ ] test to register with already taken username<br>
+  # [ ] test that all children are in the dynamic supervisor<br><br>
+  #
+  # **Multiples Tests**<br>
+  # [ ] do both tests above with 10, 100, 1000 children<br><br>
+  # end
 
   # test "register multiple users" do
   #   IO.puts("Now making multiple users")

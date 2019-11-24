@@ -1,27 +1,32 @@
 defmodule PROJ4Test do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
   doctest PROJ4
 
+  # setup do
+  #   :ok
+  # end
+
   describe "Register" do
-    # test "that new client is in dynamic supervisor" do
-    #   IO.puts("/n test that new client is in dynamic supervisor")
-    #   # insert asd as password
-    #   assert PROJ4.registerPassword("testUser1") == [["testUser1", "asd"]]
-    # end
+    test "that new client is in dynamic supervisor" do
+      IO.puts("\n \n test that new client is in dynamic supervisor")
+      # insert asd as password
+      assert PROJ4.registerPassword("testUser1") == [["testUser1", "asd"]]
+    end
 
     # with children already present
     test "that new client is in dynamic supervisor with children already present" do
-      IO.puts("\n \n test that new client is in dynamic supervisor with children already present")
       PROJ4.makeKids(6)
+      IO.puts("\n \n test that new client is in dynamic supervisor with children already present")
 
       # insert asd as password
       assert PROJ4.registerPassword("testUser2") == [
-               ["child6", "pswd"],
-               ["child5", "pswd"],
-               ["child4", "pswd"],
-               ["child3", "pswd"],
-               ["child2", "pswd"],
-               ["child1", "pswd"],
+               ["testUser1", "asd"],
+               ["child6", "asd"],
+               ["child5", "asd"],
+               ["child4", "asd"],
+               ["child3", "asd"],
+               ["child2", "asd"],
+               ["child1", "asd"],
                ["testUser2", "asd"]
              ]
     end
@@ -32,18 +37,23 @@ defmodule PROJ4Test do
     #   PROJ4.registerPassword("testUser3")
     #   assert PROJ4.registerPassword("testUser3") == :registerFailed
     # end
-
-    test "that all children are in the dynamic supervisor" do
-    end
-
-    test " do both tests above with 10, 100, 1000 children" do
-    end
+    #
+    # test "that all children are in the dynamic supervisor" do
+    # end
+    #
+    # test " do both tests above with 10, 100, 1000 children" do
+    # end
   end
 
   describe "Log In" do
-    test "log in user" do
-      IO.inspect("\n \n testing log in user child2")
+    test "testing correct log in user child2" do
+      IO.puts("\n \n testing correct log in user child2")
       assert PROJ4.loginUserGetPassWord("child2") == :correctLogIn
+    end
+
+    test "testing incorrect log in user child3" do
+      IO.puts("\n \n testing incorrect log in user child3")
+      assert PROJ4.loginUserGetPassWord("child3") == :incorrectLogIn
     end
   end
 

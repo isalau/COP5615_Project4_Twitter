@@ -808,20 +808,21 @@ defmodule PROJ4 do
 
     usernameLists = Enum.flat_map(kids, fn [user_name, _x] -> [user_name] end)
 
-    if userName in usernameLists do
-      if checkPassword(userName, password) == true do
-        :correctLogIn
-        # goToClient(userName)
+    val =
+      if userName in usernameLists do
+        if checkPassword(userName, password) == true do
+          :correctLogIn
+          # goToClient(userName)
+        else
+          IO.inspect(userName, label: "1 Incorrect username or password. Please try again.")
+          :incorrectLogIn
+          # loginUser()
+        end
       else
-        IO.inspect(userName, label: "1 Incorrect username or password. Please try again.")
-        :correctLogIn
+        IO.inspect(userName, label: "2 Incorrect username or password. Please try again.")
+        :incorrectLogIn
         # loginUser()
       end
-    else
-      IO.inspect(userName, label: "2 Incorrect username or password. Please try again.")
-      :correctLogIn
-      # loginUser()
-    end
   end
 
   def checkPassword(user_name, password) do
@@ -876,9 +877,9 @@ defmodule PROJ4 do
     # start a child
     numm = Integer.to_string(num)
     username = String.replace_suffix("child x", " x", numm)
-    DySupervisor.start_child(username, "pswd")
+    DySupervisor.start_child(username, "asd")
 
-    GenServer.cast(Engine, {:addUser, [username, "pswd"]})
+    GenServer.cast(Engine, {:addUser, [username, "asd"]})
     newNum = num - 1
     makeKids(newNum)
   end
@@ -890,7 +891,7 @@ defmodule PROJ4 do
     numm = Integer.to_string(num)
     username = String.replace_suffix("child x", " x", numm)
 
-    DySupervisor.start_child(username, "pswd")
-    GenServer.cast(Engine, {:addUser, [username, "pswd"]})
+    DySupervisor.start_child(username, "asd")
+    GenServer.cast(Engine, {:addUser, [username, "asd"]})
   end
 end

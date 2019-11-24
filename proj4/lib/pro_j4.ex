@@ -102,7 +102,8 @@ defmodule Engine do
         end
       end
 
-    {:reply, fList, state}
+    usersFeed = List.flatten(Enum.filter(fList, fn x -> x != nil end))
+    {:reply, usersFeed, state}
   end
 
   @impl true
@@ -147,7 +148,7 @@ defmodule Engine do
 
         if(username == follower) do
           newTweetsForFeed = getUsersTweets(state, toBeFollowed)
-          newFeedList = feedList ++ newTweetsForFeed
+          newFeedList = feedList ++ List.flatten(newTweetsForFeed)
           _x = [username, password, subscritionList, followersList, usersTweets, newFeedList]
         else
           [username, password, subscritionList, followersList, usersTweets, feedList]
@@ -626,11 +627,8 @@ defmodule User do
       _followersList = Enum.at(state, 3)
       tweetsList = Enum.at(state, 4)
       feedList = Enum.at(state, 5)
-      GenServer.cast(Engine, {:sendTweet, username, newTweet, followersList})
+      GenServer.cast(Engine, {:sendTweet, username, newTweet})
       IO.inspect(newTweet, label: "You tweeted")
-
-      newTweetsList = tweetsList ++ [newTweet]
-      _newState = [username, password, subscritionList, followersList, newTweetsList, feedList]
     else
       showMainMenu(state)
     end

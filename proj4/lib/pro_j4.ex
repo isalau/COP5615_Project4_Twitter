@@ -284,6 +284,7 @@ defmodule Engine do
       IO.inspect(results, label: "found query in engine")
     end
 
+    results
     {:noreply, state}
   end
 
@@ -641,44 +642,48 @@ defmodule User do
     query = String.trim(query1)
 
     # person
-    if String.contains?(query, "@") do
-      # go to engine
-      {_at, name} = String.split_at(query, 1)
-      GenServer.cast(Engine, {:findPerson, name})
-    else
-      # hashtag
-      if String.contains?(query, "#") do
+    results =
+      r_person =
+      if String.contains?(query, "@") do
         # go to engine
-        GenServer.cast(Engine, {:findHashtag, query})
-        # normal search
+        {_at, name} = String.split_at(query, 1)
+        GenServer.cast(Engine, {:findPerson, name})
       else
-        feedList = GenServer.call(Engine, {:getFeedList, userName})
-        IO.inspect(feedList, label: "feedList")
+        # hashtag
+        r_hashtag =
+          if String.contains?(query, "#") do
+            # go to engine
+            hashtag_results = GenServer.cast(Engine, {:findHashtag, query})
+            IO.inspect(hashtag_results, label: "hashtag_results")
+            # normal search
+          else
+            feedList = GenServer.call(Engine, {:getFeedList, userName})
+            IO.inspect(feedList, label: "feedList")
 
-        # for every value in the feedlist, search the tweet than search the username
-        # if something interesting is found append it to results
+            # for every value in the feedlist, search the tweet than search the username
+            # if something interesting is found append it to results
 
-        results = []
+            results = []
 
-        results =
-          for x <- feedList do
-            {tweet, username} = x
+            results =
+              for x <- feedList do
+                {tweet, username} = x
 
-            _r =
-              if(String.contains?(tweet, query) == true) do
-                IO.inspect(tweet, label: "Found")
-                _results = results ++ [{tweet, username}]
-              else
-                if(String.contains?(username, query) == true) do
-                  IO.inspect(username, label: "Found")
-                  _results = results ++ [{tweet, username}]
-                end
+                _r =
+                  if(String.contains?(tweet, query) == true) do
+                    IO.inspect(tweet, label: "Found")
+                    _results = results ++ [{tweet, username}]
+                  else
+                    if(String.contains?(username, query) == true) do
+                      IO.inspect(username, label: "Found")
+                      _results = results ++ [{tweet, username}]
+                    end
+                  end
               end
-          end
 
-        IO.inspect(results, label: "found query")
+            IO.inspect(results, label: "found query")
+          end
       end
-    end
   end
 
   def showEngine() do

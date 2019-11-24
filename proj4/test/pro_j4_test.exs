@@ -46,10 +46,10 @@ defmodule PROJ4Test do
   end
 
   describe "Log In" do
-    test "testing incorrect log in user child3" do
-      IO.puts("\n \n testing incorrect log in user child3")
-      assert PROJ4.loginUserGetPassWord("child3") == :incorrectLogIn
-    end
+    # test "testing incorrect log in user child3" do
+    #   IO.puts("\n \n testing incorrect log in user child3")
+    #   assert PROJ4.loginUserGetPassWord("child3") == :incorrectLogIn
+    # end
 
     test "testing correct log in user testUser" do
       IO.puts("\n \n testing correct log in user testUser")
@@ -85,12 +85,6 @@ defmodule PROJ4Test do
     end
   end
 
-  # describe "Re-Tweet" do
-  # end
-  #
-  # describe "Query" do
-  # end
-
   describe "Feed" do
     test "show testUser's feed" do
       IO.puts("\n \n testing show testUser feed")
@@ -99,46 +93,23 @@ defmodule PROJ4Test do
     end
   end
 
-  # test "goToClient" do
-  #   PROJ4.goToClient("testUser")
-  #   assert true
-  # end
+  describe "Query" do
+    test "test query for normal word" do
+      IO.puts("\n \n testing query for normal word")
 
-  # test "check correct username" do
-  #   PROJ4.loginUser()
-  # end
+      assert User.query(["testUser", "asd"]) == [[{"init feed tweet #testing123", "wise_one"}]]
+    end
 
-  # test "show login screen" do
-  #   assert PROJ4.enterTwitter() == :showLogIn
-  # end
-  #
-  # describe "register tests" do
-  #   # **Single Test**<br><br>
-  #   # [x] test that new client is in dynamic supervisor<br><br>
-  #   test "register user" do
-  #     IO.inspect("Register one user")
-  #     assert PROJ4.registerPassword("testUser1") == :goToLogin
-  #   end
+    test "test query for hashtag word" do
+      IO.puts("\n \n testing query for hashtag")
 
-  #
-  # **Single Test (with children already present in dynamic supervisor)**<br>
-  # [ ] test that new client is in dynamic supervisor<br>
-  # [ ] test to register with already taken username<br>
-  # [ ] test that all children are in the dynamic supervisor<br><br>
-  #
-  # **Multiples Tests**<br>
-  # [ ] do both tests above with 10, 100, 1000 children<br><br>
-  # end
+      assert User.query(["testUser", "asd"]) == :ok
+    end
 
-  # test "register multiple users" do
-  #   IO.puts("Now making multiple users")
-  #   PROJ4.makeManyKids(10)
-  #   # Prints out the children user name to test that they were correctly registered
-  #   kids = PROJ4.getChildren()
-  #   IO.inspect(kids)
-  # end
+    test "test query for person" do
+      IO.puts("\n \n testing query for hashtag")
 
-  # test "send one tweet" do
-  #   IO.puts("Sending on tweet")
-  # end
+      assert User.query(["testUser", "asd"]) == :ok
+    end
+  end
 end

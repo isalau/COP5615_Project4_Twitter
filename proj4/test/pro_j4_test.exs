@@ -16,12 +16,12 @@ defmodule PROJ4Test do
 
       # insert asd as password
       assert PROJ4.registerPassword("testUser2") == [
-               ["child6", 6],
-               ["child5", 5],
-               ["child4", 4],
-               ["child3", 3],
-               ["child2", 2],
-               ["child1", 1],
+               ["child6", "pswd"],
+               ["child5", "pswd"],
+               ["child4", "pswd"],
+               ["child3", "pswd"],
+               ["child2", "pswd"],
+               ["child1", "pswd"],
                ["testUser2", "asd"]
              ]
     end
@@ -37,6 +37,13 @@ defmodule PROJ4Test do
     end
 
     test " do both tests above with 10, 100, 1000 children" do
+    end
+  end
+
+  describe "Log In" do
+    test "log in user" do
+      IO.inspect("\n \n testing log in user child2")
+      assert PROJ4.loginUserGetPassWord("child2") == :correctLogIn
     end
   end
 
@@ -83,17 +90,6 @@ defmodule PROJ4Test do
   #   # Prints out the children user name to test that they were correctly registered
   #   kids = PROJ4.getChildren()
   #   IO.inspect(kids)
-  # end
-
-  # test "log in user" do
-  #   IO.inspect("Testing log in user")
-  #   # first create a test user to test log in with
-  #   PROJ4.registerUser()
-  #
-  #   # next test log in
-  #   PROJ4.main()
-  #   # Prints out the children user name to test that they were correctly registered
-  #   kids = PROJ4.getChildren()
   # end
 
   # test "send one tweet" do

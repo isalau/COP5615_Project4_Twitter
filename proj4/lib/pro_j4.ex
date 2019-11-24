@@ -201,7 +201,7 @@ defmodule Engine do
   @impl true
   def handle_cast({:sendTweet, userName, tweet}, state) do
     # get followersList
-    followersList =
+    _followersList =
       for user <- state do
         [username, _password, _subscritionList, followersList, _usersTweets, _feedList] = user
 
@@ -717,22 +717,22 @@ defmodule PROJ4 do
         registerUserName()
 
       "Log In\n" ->
-        loginUser()
+        loginUserGetUserName()
 
       "LogIn\n" ->
-        loginUser()
+        loginUserGetUserName()
 
       "log In\n" ->
-        loginUser()
+        loginUserGetUserName()
 
       "logIn\n" ->
-        loginUser()
+        loginUserGetUserName()
 
       "log in\n" ->
-        loginUser()
+        loginUserGetUserName()
 
       "login\n" ->
-        loginUser()
+        loginUserGetUserName()
 
       "test\n" ->
         test()
@@ -786,37 +786,41 @@ defmodule PROJ4 do
     # check that child is in DySupervisor
     children = DynamicSupervisor.which_children(DySupervisor)
 
-    state =
+    _state =
       for x <- children do
         {_, pidx, _, _} = x
-        state = :sys.get_state(pidx)
+        _state = :sys.get_state(pidx)
       end
   end
 
-  def loginUser() do
+  def loginUserGetUserName() do
     user_name = Mix.Shell.IO.prompt("Please Enter Your UserName:")
     userName = String.trim(user_name)
+    loginUserGetPassWord(userName)
+  end
 
+  def loginUserGetPassWord(userName) do
     password1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
     password = String.trim(password1)
 
     # check that username exists
     kids = getChildren()
-    # IO.inspect(kids, label: "kids")
 
     usernameLists = Enum.flat_map(kids, fn [user_name, _x] -> [user_name] end)
-    # IO.inspect(usernameLists, label: "usernameLists")
 
     if userName in usernameLists do
       if checkPassword(userName, password) == true do
-        goToClient(userName)
+        :correctLogIn
+        # goToClient(userName)
       else
         IO.inspect(userName, label: "1 Incorrect username or password. Please try again.")
-        loginUser()
+        :correctLogIn
+        # loginUser()
       end
     else
       IO.inspect(userName, label: "2 Incorrect username or password. Please try again.")
-      loginUser()
+      :correctLogIn
+      # loginUser()
     end
   end
 
@@ -872,9 +876,9 @@ defmodule PROJ4 do
     # start a child
     numm = Integer.to_string(num)
     username = String.replace_suffix("child x", " x", numm)
-    DySupervisor.start_child(username, num)
+    DySupervisor.start_child(username, "pswd")
 
-    GenServer.cast(Engine, {:addUser, [username, num]})
+    GenServer.cast(Engine, {:addUser, [username, "pswd"]})
     newNum = num - 1
     makeKids(newNum)
   end
@@ -886,7 +890,7 @@ defmodule PROJ4 do
     numm = Integer.to_string(num)
     username = String.replace_suffix("child x", " x", numm)
 
-    DySupervisor.start_child(username, num)
-    GenServer.cast(Engine, {:addUser, [username, num]})
+    DySupervisor.start_child(username, "pswd")
+    GenServer.cast(Engine, {:addUser, [username, "pswd"]})
   end
 end

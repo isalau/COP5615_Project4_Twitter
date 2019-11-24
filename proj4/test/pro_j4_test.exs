@@ -69,7 +69,7 @@ defmodule PROJ4Test do
   #              ["child4", "asd"],
   #              ["child3", "asd"],
   #              ["child1", "asd"],
-  #              ["testUser2", "asd"]
+  #              ["testUser", "asd"]
   #            ]
   #   end
   # end

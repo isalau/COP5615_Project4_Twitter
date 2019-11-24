@@ -140,6 +140,24 @@ defmodule Engine do
   end
 
   @impl true
+  def handle_cast({:addSubToFeed, follower, toBeFollowed}, state) do
+    new_state =
+      for user <- state do
+        [username, password, subscritionList, followersList, usersTweets, feedList] = user
+
+        if(username == follower) do
+          newTweetsForFeed = getUsersTweets(state, toBeFollowed)
+          newFeedList = feedList ++ newTweetsForFeed
+          _x = [username, password, subscritionList, followersList, usersTweets, newFeedList]
+        else
+          [username, password, subscritionList, followersList, usersTweets, feedList]
+        end
+      end
+
+    {:noreply, new_state}
+  end
+
+  @impl true
   def handle_cast({:addFollower, follower, toBeFollowed}, state) do
     new_state =
       for user <- state do
@@ -262,6 +280,21 @@ defmodule Engine do
 
     IO.inspect(results, label: "found query in engine")
     {:noreply, state}
+  end
+
+  def getUsersTweets(state, userName) do
+    usersTweetsForFeed =
+      for user <- state do
+        [username, _password, _subscritionList, _followersList, usersTweets, _feedList] = user
+
+        if(username == userName) do
+          usersTweets
+        end
+      end
+
+    usersTweetsForFeed = Enum.filter(usersTweetsForFeed, fn x -> x != nil end)
+    IO.inspect(usersTweetsForFeed, label: "usersTweets")
+    usersTweetsForFeed
   end
 end
 
@@ -523,6 +556,7 @@ defmodule User do
         if newUserToSubscribeTo != username do
           GenServer.cast(Engine, {:addFollower, username, newUserToSubscribeTo})
           GenServer.cast(Engine, {:addToSubscribeList, username, newUserToSubscribeTo})
+          GenServer.cast(Engine, {:addSubToFeed, username, newUserToSubscribeTo})
           IO.puts("You are now subscribed to #{newUserToSubscribeTo}")
         else
           IO.puts("You cannot subscribe to yourself")

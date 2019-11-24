@@ -340,7 +340,7 @@ defmodule User do
 
   def start_link(args) do
     user_name = Enum.at(args, 0)
-    IO.inspect(user_name, label: "username for new client")
+    # IO.inspect(user_name, label: "username for new client")
     {:ok, _pid} = GenServer.start_link(__MODULE__, args, name: :"#{user_name}")
   end
 
@@ -372,7 +372,8 @@ defmodule User do
 
   @impl true
   def handle_cast({:goToClient}, state) do
-    showMainMenu(state)
+    # showMainMenu(state)
+    state
     {:noreply, state}
   end
 
@@ -759,19 +760,37 @@ defmodule PROJ4 do
       # start dynamic supervisor
       password = String.trim(password1)
 
-      # start a child
-      DySupervisor.start_child(user_name, password)
-      GenServer.cast(Engine, {:addUser, [user_name, password]})
+      # check if username already taken
+      usernameLists = GenServer.call(Engine, {:getUsers})
 
-      IO.puts("Your new username is #{user_name} and your account was created")
-      IO.puts("Please Log In For First Time")
-      # :goToLogin
-      loginUser()
+      if user_name in usernameLists do
+        IO.puts("Username already taken please try again")
+        :registerFailed
+        # registerPassword(user_name)
+      else
+        # start a child
+        DySupervisor.start_child(user_name, password)
+        GenServer.cast(Engine, {:addUser, [user_name, password]})
+
+        IO.puts("Your new username is #{user_name} and your account was created")
+        IO.puts("Please Log In For First Time")
+        # :goToLogin
+        # loginUser()
+      end
     else
       IO.puts("Passwords did not match please try again")
       # :registerFailed
       registerPassword(user_name)
     end
+
+    # check that child is in DySupervisor
+    children = DynamicSupervisor.which_children(DySupervisor)
+
+    state =
+      for x <- children do
+        {_, pidx, _, _} = x
+        state = :sys.get_state(pidx)
+      end
   end
 
   def loginUser() do

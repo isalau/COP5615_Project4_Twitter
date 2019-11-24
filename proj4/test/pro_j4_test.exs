@@ -2,29 +2,58 @@ defmodule PROJ4Test do
   use ExUnit.Case
   doctest PROJ4
 
-  setup do
-    # make a bunch of kids
-    PROJ4.makeKids(6)
+  describe "Register" do
+    # test "that new client is in dynamic supervisor" do
+    #   IO.puts("/n test that new client is in dynamic supervisor")
+    #   # insert asd as password
+    #   assert PROJ4.registerPassword("testUser1") == [["testUser1", "asd"]]
+    # end
 
-    # register a specific user
-    DySupervisor.start_child("testUser", "t")
-    GenServer.cast(Engine, {:addUser, ["testUser", "t"]})
+    # with children already present
+    test "that new client is in dynamic supervisor with children already present" do
+      IO.puts("\n \n test that new client is in dynamic supervisor with children already present")
+      PROJ4.makeKids(6)
 
-    # make sure they are all there
-    kids = PROJ4.getChildren()
-    IO.inspect(kids)
+      # insert asd as password
+      assert PROJ4.registerPassword("testUser2") == [
+               ["child6", 6],
+               ["child5", 5],
+               ["child4", 4],
+               ["child3", 3],
+               ["child2", 2],
+               ["child1", 1],
+               ["testUser2", "asd"]
+             ]
+    end
 
-    # goToClient
-    # goToClient("testUser")
+    # test "to register with already taken username" do
+    #   IO.puts("test to register with already taken username")
+    #
+    #   PROJ4.registerPassword("testUser3")
+    #   assert PROJ4.registerPassword("testUser3") == :registerFailed
+    # end
+
+    test "that all children are in the dynamic supervisor" do
+    end
+
+    test " do both tests above with 10, 100, 1000 children" do
+    end
   end
+
+  # test "delete account" do
+  #   userName = "testUser"
+  #   new_state = GenServer.cast(:"#{userName}", {:goToClient})
+  #   User.deleteUser(new_state)
+  # end
 
   # test "goToClient" do
   #   PROJ4.goToClient("testUser")
+  #   assert true
   # end
 
-  test "check correct username" do
-    PROJ4.loginUser()
-  end
+  # test "check correct username" do
+  #   PROJ4.loginUser()
+  # end
 
   # test "show login screen" do
   #   assert PROJ4.enterTwitter() == :showLogIn

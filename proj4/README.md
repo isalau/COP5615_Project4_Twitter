@@ -15,10 +15,10 @@
 ### **Tests**
 
 **Single Test**<br><br>
-[x] test that new client is in dynamic supervisor<br><br>
+[] test that new client is in dynamic supervisor<br><br>
 
 **Single Test (with children already present in dynamic supervisor)**<br>
-[ ] test that new client is in dynamic supervisor<br>
+[x] test that new client is in dynamic supervisor<br>
 [ ] test to register with already taken username<br>
 [ ] test that all children are in the dynamic supervisor<br><br>
 

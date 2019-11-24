@@ -108,17 +108,14 @@ defmodule Engine do
 
   @impl true
   def handle_cast({:addUser, [username, password]}, state) do
-    # IO.inspect("in engine add user")
     # CSSA = [username, password, subscritionList, followersList, usersTweets, feedList]
 
+    # for testing
     init_tweet = {"init feed tweet #testing123", "wise_one"}
-
-    newCSSA = [[username, password, [], [], [init_tweet], []]]
+    # for testing
+    init_subscribed = "testUser"
+    newCSSA = [[username, password, [init_subscribed], [], [init_tweet], []]]
     new_state = state ++ newCSSA
-    # usernamePasswordTuple = Enum.at(state, 0)
-    # newusernamePasswordTuple = usernamePasswordTuple ++ [{username, password}]
-    # allTweetsList = Enum.at(state, 1)
-    # new_state = [newusernamePasswordTuple, allTweetsList]
 
     {:noreply, new_state}
   end
@@ -215,6 +212,9 @@ defmodule Engine do
 
     # for every follower use :getTweet in genserver
 
+    # for testing
+    followersList = ["child1", "child2", "child3", "child4", "child5", "child6"]
+
     Enum.each(followersList, fn follower ->
       # send tweet message
       GenServer.cast(:"#{follower}", {:getTweet, userName, tweet})
@@ -237,6 +237,25 @@ defmodule Engine do
   end
 
   @impl true
+  def handle_cast({:getTweet, tweeter, tweet, user_name}, state) do
+    # IO.inspect(tweet, label: "got something ")
+
+    new_state =
+      for user <- state do
+        [username, password, subscritionList, followersList, usersTweets, feedList] = user
+
+        if(username == user_name) do
+          newfeedList = feedList ++ [{tweet, tweeter}]
+          _x = [username, password, subscritionList, followersList, usersTweets, newfeedList]
+        else
+          [username, password, subscritionList, followersList, usersTweets, feedList]
+        end
+      end
+
+    {:noreply, new_state}
+  end
+
+  @impl true
   def handle_cast({:findHashtag, query}, state) do
     # for every value in the feedlist, search the tweet than search the username
     # if something interesting is found append it to results
@@ -245,7 +264,7 @@ defmodule Engine do
 
     results =
       for x <- state do
-        [username, password, subscritionList, followersList, usersTweets, feedList] = x
+        [_username, _password, _subscritionList, _followersList, usersTweets, _feedList] = x
 
         for tweeter <- usersTweets do
           {tweet, username} = tweeter
@@ -277,7 +296,7 @@ defmodule Engine do
 
     results =
       for x <- state do
-        [username, password, subscritionList, followersList, usersTweets, feedList] = x
+        [_username, _password, _subscritionList, _followersList, usersTweets, _feedList] = x
 
         for tweeter <- usersTweets do
           {tweet, username} = tweeter
@@ -359,18 +378,10 @@ defmodule User do
 
   @impl true
   def handle_cast({:getTweet, tweeter, tweet}, state) do
-    # IO.inspect(tweet, label: "Got tweet from #{username}")
     username = Enum.at(state, 0)
-    password = Enum.at(state, 1)
-    subscritionList = Enum.at(state, 2)
-    followersList = Enum.at(state, 3)
-    tweetsList = Enum.at(state, 4)
-    feedList = Enum.at(state, 5)
-
-    newFeedsList = feedList ++ [{tweet, tweeter}]
-    newState = [username, password, subscritionList, followersList, tweetsList, newFeedsList]
-    IO.inspect(newState, label: "New tweet received")
-    {:noreply, newState}
+    # IO.inspect(username, label: "User got tweet")
+    GenServer.cast(Engine, {:getTweet, tweeter, tweet, username})
+    {:noreply, state}
   end
 
   def showMainMenu(state) do
@@ -652,14 +663,14 @@ defmodule User do
           for x <- feedList do
             {tweet, username} = x
 
-            r =
+            _r =
               if(String.contains?(tweet, query) == true) do
                 IO.inspect(tweet, label: "Found")
-                results = results ++ [{tweet, username}]
+                _results = results ++ [{tweet, username}]
               else
                 if(String.contains?(username, query) == true) do
                   IO.inspect(username, label: "Found")
-                  results = results ++ [{tweet, username}]
+                  _results = results ++ [{tweet, username}]
                 end
               end
           end

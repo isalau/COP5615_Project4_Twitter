@@ -594,7 +594,7 @@ defmodule User do
   def feed(state) do
     userName = Enum.at(state, 0)
     feedList = GenServer.call(Engine, {:getFeedList, userName})
-    IO.inspect(feedList, label: "Your feed")
+    # IO.inspect(feedList, label: "Your feed")
   end
 
   def retweet(state) do

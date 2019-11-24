@@ -19,7 +19,7 @@ defmodule PROJ4Test do
       IO.puts("\n \n test that new client is in dynamic supervisor with children already present")
 
       # insert asd as password
-      assert PROJ4.registerPassword("testUser2") == [
+      assert PROJ4.registerPassword("testUser") == [
                ["testUser1", "asd"],
                ["child6", "asd"],
                ["child5", "asd"],
@@ -27,7 +27,7 @@ defmodule PROJ4Test do
                ["child3", "asd"],
                ["child2", "asd"],
                ["child1", "asd"],
-               ["testUser2", "asd"]
+               ["testUser", "asd"]
              ]
     end
 
@@ -46,22 +46,58 @@ defmodule PROJ4Test do
   end
 
   describe "Log In" do
-    test "testing correct log in user child2" do
-      IO.puts("\n \n testing correct log in user child2")
-      assert PROJ4.loginUserGetPassWord("child2") == :correctLogIn
-    end
-
     test "testing incorrect log in user child3" do
       IO.puts("\n \n testing incorrect log in user child3")
       assert PROJ4.loginUserGetPassWord("child3") == :incorrectLogIn
     end
+
+    test "testing correct log in user testUser" do
+      IO.puts("\n \n testing correct log in user testUser")
+      assert PROJ4.loginUserGetPassWord("testUser") == :correctLogIn
+    end
   end
 
-  # test "delete account" do
-  #   userName = "testUser"
-  #   new_state = GenServer.cast(:"#{userName}", {:goToClient})
-  #   User.deleteUser(new_state)
+  # describe "Delete Account" do
+  #   test "delete account" do
+  #     IO.puts("\n \n testing delete child2")
+  #     User.deleteUser(["child2", "asd"])
+  #
+  #     assert GenServer.cast(Engine, {:getUsers}) == [
+  #              ["testUser1", "asd"],
+  #              ["child6", "asd"],
+  #              ["child5", "asd"],
+  #              ["child4", "asd"],
+  #              ["child3", "asd"],
+  #              ["child1", "asd"],
+  #              ["testUser2", "asd"]
+  #            ]
+  #   end
   # end
+
+  # describe "Send Tweet" do
+  # end
+  #
+  describe "Subscribe" do
+    test "subscribe child2 to testUser's feed" do
+      IO.puts("\n \n subscribe child2 to testUser's feed")
+
+      assert User.subscribeToUser(["testUser", "asd"]) == :ok
+    end
+  end
+
+  # describe "Re-Tweet" do
+  # end
+  #
+  # describe "Query" do
+  # end
+
+  describe "Feed" do
+    test "show testUser's feed" do
+      IO.puts("\n \n testing show testUser feed")
+
+      assert User.feed(["testUser", "asd"]) == [{"init feed tweet #testing123", "wise_one"}]
+    end
+  end
 
   # test "goToClient" do
   #   PROJ4.goToClient("testUser")

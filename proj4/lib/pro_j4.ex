@@ -32,8 +32,6 @@ defmodule EngineSupervisor do
   end
 
   def start_child(_opts) do
-    # init_tweet = {"init feed tweet #testing123", "childtest"}
-
     # state = [[username, password, subscritionList, followersList, usersTweets, feedList],[username, password, subscritionList, followersList, usersTweets, feedList],[username, password, subscritionList, followersList, usersTweets, feedList]]
     child_spec = Supervisor.child_spec({Engine, []}, id: :engine, restart: :temporary)
 
@@ -92,11 +90,29 @@ defmodule Engine do
   end
 
   @impl true
+  def handle_call({:getFeedList, userName}, _from, state) do
+    # IO.inspect(state, label: "Engine state")
+
+    fList =
+      for user <- state do
+        [username, _password, _subscritionList, _followersList, _usersTweets, feedList] = user
+
+        if(username == userName) do
+          feedList
+        end
+      end
+
+    {:reply, fList, state}
+  end
+
+  @impl true
   def handle_cast({:addUser, [username, password]}, state) do
     # IO.inspect("in engine add user")
     # CSSA = [username, password, subscritionList, followersList, usersTweets, feedList]
 
-    newCSSA = [[username, password, [], [], [], []]]
+    init_tweet = {"init feed tweet #testing123", "childtest"}
+
+    newCSSA = [[username, password, [], [], [init_tweet], []]]
     new_state = state ++ newCSSA
     # usernamePasswordTuple = Enum.at(state, 0)
     # newusernamePasswordTuple = usernamePasswordTuple ++ [{username, password}]
@@ -107,13 +123,30 @@ defmodule Engine do
   end
 
   @impl true
-  def handle_cast({:addFollower, follower, toBeFollowed}, state) do
+  def handle_cast({:addToSubscribeList, follower, toBeFollowed}, state) do
     new_state =
       for user <- state do
         [username, password, subscritionList, followersList, usersTweets, feedList] = user
 
         if(username == follower) do
-          newFollowersList = followersList ++ [toBeFollowed]
+          newsubscritionList = subscritionList ++ [toBeFollowed]
+          _x = [username, password, newsubscritionList, followersList, usersTweets, feedList]
+        else
+          [username, password, subscritionList, followersList, usersTweets, feedList]
+        end
+      end
+
+    {:noreply, new_state}
+  end
+
+  @impl true
+  def handle_cast({:addFollower, follower, toBeFollowed}, state) do
+    new_state =
+      for user <- state do
+        [username, password, subscritionList, followersList, usersTweets, feedList] = user
+
+        if(username == toBeFollowed) do
+          newFollowersList = followersList ++ [follower]
           _x = [username, password, subscritionList, newFollowersList, usersTweets, feedList]
         else
           [username, password, subscritionList, followersList, usersTweets, feedList]
@@ -489,6 +522,7 @@ defmodule User do
       else
         if newUserToSubscribeTo != username do
           GenServer.cast(Engine, {:addFollower, username, newUserToSubscribeTo})
+          GenServer.cast(Engine, {:addToSubscribeList, username, newUserToSubscribeTo})
           IO.puts("You are now subscribed to #{newUserToSubscribeTo}")
         else
           IO.puts("You cannot subscribe to yourself")
@@ -519,7 +553,8 @@ defmodule User do
   end
 
   def retweet(state) do
-    feedList = Enum.at(state, 5)
+    userName = Enum.at(state, 0)
+    feedList = GenServer.call(Engine, {:getFeedList, userName})
     indexedFeedList = Enum.with_index(feedList)
     numberedFeedList = []
 
@@ -564,7 +599,6 @@ defmodule User do
       _newState = [username, password, subscritionList, followersList, newTweetsList, feedList]
     else
       showMainMenu(state)
-      state
     end
   end
 

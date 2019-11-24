@@ -63,14 +63,32 @@ defmodule Engine do
     # IO.inspect(state, label: "Engine state")
 
     usersLists =
-      Enum.flat_map(state, fn [uPL, _aT] ->
-        {username, _password} = uPL
+      Enum.flat_map(state, fn cssa ->
+        [username, _password, _subscritionList, _followersList, _usersTweets, _feedList] = cssa
         [username]
       end)
 
     # IO.inspect(usersLists, label: "usersLists")
 
     {:reply, usersLists, state}
+  end
+
+  @impl true
+  def handle_call({:getSubscribers, userName}, _from, state) do
+    # IO.inspect(state, label: "Engine state")
+
+    subsList =
+      for user <- state do
+        [username, _password, subscritionList, _followersList, _usersTweets, _feedList] = user
+
+        if(username == userName) do
+          subscritionList
+        end
+      end
+
+    # IO.inspect(usersLists, label: "usersLists")
+
+    {:reply, subsList, state}
   end
 
   @impl true
@@ -89,9 +107,20 @@ defmodule Engine do
   end
 
   @impl true
-  def handle_cast({:addFollower, follower, followee}, state) do
-    GenServer.cast(:"#{followee}", {:addFollower, follower, followee})
-    {:noreply, state}
+  def handle_cast({:addFollower, follower, toBeFollowed}, state) do
+    new_state =
+      for user <- state do
+        [username, password, subscritionList, followersList, usersTweets, feedList] = user
+
+        if(username == follower) do
+          newFollowersList = followersList ++ [toBeFollowed]
+          _x = [username, password, subscritionList, newFollowersList, usersTweets, feedList]
+        else
+          [username, password, subscritionList, followersList, usersTweets, feedList]
+        end
+      end
+
+    {:noreply, new_state}
   end
 
   @impl true
@@ -106,13 +135,13 @@ defmodule Engine do
   def handle_cast({:removeUser, user_state}, state) do
     user_name = Enum.at(user_state, 0)
 
-    new_state = state
+    _new_state = state
 
     new_state =
       for x <- state do
-        [username, password, _subscritionList, _followersList, _usersTweets, _usersTweets] = x
+        [username, _password, _subscritionList, _followersList, _usersTweets, _feedList] = x
 
-        if(username == user_state) do
+        if(username == user_name) do
           _newList = List.delete(state, x)
         end
       end
@@ -122,9 +151,9 @@ defmodule Engine do
 
   @impl true
   def handle_cast({:sendTweet, userName, tweet}, state) do
-    followersList =
+    _followersList =
       for x <- state do
-        [username, password, _subscritionList, followersList, _usersTweets, _feedList] = x
+        [username, _password, _subscritionList, followersList, _usersTweets, _feedList] = x
 
         if(userName == username) do
           followersList
@@ -141,7 +170,7 @@ defmodule Engine do
     end)
 
     # update users tweets
-    new_state = state
+    _new_state = state
 
     new_state =
       for x <- state do
@@ -149,7 +178,7 @@ defmodule Engine do
 
         if(username == userName) do
           usersNewTweets = usersTweets ++ [tweet]
-          x = [username, password, subscritionList, followersList, usersNewTweets, feedList]
+          _x = [username, password, subscritionList, followersList, usersNewTweets, feedList]
         end
       end
 
@@ -224,19 +253,19 @@ defmodule User do
     {:noreply, new_state}
   end
 
-  @impl true
-  def handle_cast({:addFollower, follower, _followee}, state) do
-    username = Enum.at(state, 0)
-    password = Enum.at(state, 1)
-    subscritionList = Enum.at(state, 2)
-    followersList = Enum.at(state, 3)
-    tweetsList = Enum.at(state, 4)
-
-    newFollowersList = followersList ++ [follower]
-    newState = [username, password, subscritionList, newFollowersList, tweetsList]
-    IO.inspect(newState, label: "in addFollower user state")
-    {:noreply, newState}
-  end
+  # @impl true
+  # def handle_cast({:addFollower, follower, _followee}, state) do
+  #   username = Enum.at(state, 0)
+  #   password = Enum.at(state, 1)
+  #   subscritionList = Enum.at(state, 2)
+  #   followersList = Enum.at(state, 3)
+  #   tweetsList = Enum.at(state, 4)
+  #
+  #   newFollowersList = followersList ++ [follower]
+  #   newState = [username, password, subscritionList, newFollowersList, tweetsList]
+  #   IO.inspect(newState, label: "in addFollower user state")
+  #   {:noreply, newState}
+  # end
 
   @impl true
   def handle_cast({:goToClient}, state) do
@@ -282,19 +311,17 @@ defmodule User do
         deleteUser(state)
 
       ###########################
+      "sub\n" ->
+        subscribeToUser(state)
+        showMainMenu(state)
+
       "Subscribe\n" ->
-        new_state = subscribeToUser(state)
-        IO.inspect(new_state, label: "new state in showMainMenu")
-        # tell engine to update their list and  my state
-        username = Enum.at(state, 0)
-        GenServer.cast(Engine, {:updateUser, username, new_state})
+        subscribeToUser(state)
+        showMainMenu(state)
 
       "subscribe\n" ->
-        new_state = subscribeToUser(state)
-        IO.inspect(new_state, label: "new state in showMainMenu")
-        # tell engine to update their list and  my state
-        username = Enum.at(state, 0)
-        GenServer.cast(Engine, {:updateUser, username, new_state})
+        subscribeToUser(state)
+        showMainMenu(state)
 
       ###########################
       "SendTweet\n" ->
@@ -399,6 +426,7 @@ defmodule User do
           deleteConfirm(state)
         else
           IO.puts("Incorrect password")
+          deleteUser(state)
         end
 
       "No\n" ->
@@ -452,45 +480,28 @@ defmodule User do
     username = Enum.at(state, 0)
 
     usernameLists = GenServer.call(Engine, {:getUsers})
-    # IO.inspect(usernameLists, label: "usernameLists")
 
-    new_state =
-      if newUserToSubscribeTo in usernameLists do
-        # IO.puts("existing user")
-        [_username, _password, subscritionList, _followerssList, _tweetsList] = state
+    if newUserToSubscribeTo in usernameLists do
+      subscritionList = GenServer.call(Engine, {:getSubscribers, username})
 
-        if newUserToSubscribeTo in subscritionList do
-          IO.puts("You are already subscribed to this user")
-          state
-        else
-          if newUserToSubscribeTo != username do
-            newsubscritionList = subscritionList ++ [newUserToSubscribeTo]
-
-            GenServer.cast(Engine, {:addFollower, username, newUserToSubscribeTo})
-            IO.puts("You are now subscribed to #{newUserToSubscribeTo}")
-            # IO.inspect(newsubscritionList, label: "subscription list")
-
-            password = Enum.at(state, 1)
-            followersList = Enum.at(state, 3)
-            tweetsList = Enum.at(state, 4)
-            _newState = [username, password, newsubscritionList, followersList, tweetsList]
-          else
-            IO.puts("You cannot subscribe to yourself")
-            state
-          end
-        end
+      if newUserToSubscribeTo in subscritionList do
+        IO.puts("You are already subscribed to this user")
       else
-        IO.puts("no such user")
-        state
+        if newUserToSubscribeTo != username do
+          GenServer.cast(Engine, {:addFollower, username, newUserToSubscribeTo})
+          IO.puts("You are now subscribed to #{newUserToSubscribeTo}")
+        else
+          IO.puts("You cannot subscribe to yourself")
+        end
       end
-
-    # IO.inspect(new_state, label: "new state in subscribeToUser")
-    new_state
+    else
+      IO.puts("There is no such user")
+    end
   end
 
   def tweet(state) do
     username = Enum.at(state, 0)
-    password = Enum.at(state, 1)
+    _password = Enum.at(state, 1)
 
     tweet1 = Mix.Shell.IO.prompt("What would you like to tweet?")
     tweet = String.trim(tweet1)
@@ -656,6 +667,9 @@ defmodule PROJ4 do
       "login\n" ->
         loginUser()
 
+      "test\n" ->
+        test()
+
       _ ->
         enterTwitter()
     end
@@ -751,19 +765,43 @@ defmodule PROJ4 do
     end
   end
 
-  # def test() do
-  #   # make a bunch of kids
-  #   makeKids(6)
-  #
-  #   # register a specific user
-  #   DySupervisor.start_child("testUser", "t")
-  #   GenServer.cast(Engine, {:addUser, ["testUser", "t"]})
-  #
-  #   # make sure they are all there
-  #   kids = PROJ4.getChildren()
-  #   IO.inspect(kids)
-  #
-  #   # goToClient
-  #   goToClient("testUser")
-  # end
+  def test() do
+    # make a bunch of kids
+    makeKids(6)
+
+    # register a specific user
+    DySupervisor.start_child("testUser", "t")
+    GenServer.cast(Engine, {:addUser, ["testUser", "t"]})
+
+    # make sure they are all there
+    kids = PROJ4.getChildren()
+    IO.inspect(kids)
+
+    # goToClient
+    goToClient("testUser")
+  end
+
+  def makeKids(num) when num > 1 do
+    # IO.puts("making kids")
+
+    # start a child
+    numm = Integer.to_string(num)
+    username = String.replace_suffix("child x", " x", numm)
+    DySupervisor.start_child(username, num)
+
+    GenServer.cast(Engine, {:addUser, [username, num]})
+    newNum = num - 1
+    makeKids(newNum)
+  end
+
+  def makeKids(num) do
+    # IO.puts("made kids")
+
+    # start a child
+    numm = Integer.to_string(num)
+    username = String.replace_suffix("child x", " x", numm)
+
+    DySupervisor.start_child(username, num)
+    GenServer.cast(Engine, {:addUser, [username, num]})
+  end
 end

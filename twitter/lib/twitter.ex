@@ -239,10 +239,10 @@ defmodule Retweet do
 
         if(tweetLength > 280) do
           overby = tweetLength - 280
-          IO.puts("Tweet is too long by #{overby} characters please try again. ")
+          IO.puts("Re-tweet is too long by #{overby} characters please try again. ")
           :TweetToLong
         else
-          newTweet = "#{addedToTweet} : respond to tweet #{tweet}"
+          newTweet = "#{addedToTweet}: respond to tweet #{tweet}"
           new_tweets = GenServer.call(id, {:tweet, newTweet})
         end
       else

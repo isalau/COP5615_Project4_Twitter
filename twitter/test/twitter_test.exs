@@ -111,6 +111,16 @@ defmodule TWITTERTest do
       assert results == ["test tweet for #testing i love puppies"]
     end
 
+    test "if query is empty it should not pass" do
+      IO.puts("\n \n testing if query is empty it should not pass")
+
+      sender = "dobra"
+      pid_sender = :"#{sender}"
+      query = " "
+      results = Query.get_my_results(query, pid_sender)
+      assert results == :EmptyQuery
+    end
+
     test "query for hashtag" do
       IO.puts("\n \n testing query for hashtag")
       sender = "dobra"

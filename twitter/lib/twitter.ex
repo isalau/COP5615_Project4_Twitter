@@ -278,23 +278,30 @@ end
 
 defmodule Query do
   def get_my_results(query, my_id) do
-    id = :"#{my_id}_cssa"
-    feedList = GenServer.call(id, {:get_feed})
-    IO.inspect(feedList, label: "feedList")
+    queryLength = String.length(query)
 
-    # # for every value in the feedlist, search the tweet than search the username
-    # # if something interesting is found append it to results
-    #
-    results = []
+    if(queryLength == 0 || query == " ") do
+      IO.puts("You cannot query an empty string")
+      :EmptyQuery
+    else
+      id = :"#{my_id}_cssa"
+      feedList = GenServer.call(id, {:get_feed})
+      IO.inspect(feedList, label: "feedList")
 
-    results =
-      for tweet <- feedList do
-        _r =
-          if(String.contains?(tweet, query) == true) do
-            IO.inspect(tweet, label: "Found")
-            _results = results ++ tweet
-          end
-      end
+      # # for every value in the feedlist, search the tweet than search the username
+      # # if something interesting is found append it to results
+      #
+      results = []
+
+      results =
+        for tweet <- feedList do
+          _r =
+            if(String.contains?(tweet, query) == true) do
+              IO.inspect(tweet, label: "Found")
+              _results = results ++ tweet
+            end
+        end
+    end
   end
 
   def get_my_feed(my_id) do

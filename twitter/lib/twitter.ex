@@ -168,6 +168,22 @@ defmodule Register do
     IO.puts("The people's list is")
     IO.inspect(new_subscribed)
   end
+
+  def makeKids(num) when num > 1 do
+    # start a child
+    numm = Integer.to_string(num)
+    username = String.replace_suffix("child x", " x", numm)
+    reg(username)
+    newNum = num - 1
+    makeKids(newNum)
+  end
+
+  def makeKids(num) do
+    # start a child
+    numm = Integer.to_string(num)
+    username = String.replace_suffix("child x", " x", numm)
+    reg(username)
+  end
 end
 
 defmodule Subscribe do

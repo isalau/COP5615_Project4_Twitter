@@ -8,11 +8,11 @@ defmodule TWITTERTest do
 
       # have user1 tweet something
       sender = "isabel"
-      tweet = "test tweet for #testing"
+      tweet = "test tweet for #testing i love puppies"
       # added line new_tweets to send_tweet function for test
       new_tweets = Tweet.send_tweet(sender, tweet)
       # assert that it is in her tweet's list
-      assert new_tweets == ["test tweet for #testing"]
+      assert new_tweets == ["test tweet for #testing i love puppies"]
     end
 
     test "if user tweets it is in their followers feed" do
@@ -22,7 +22,7 @@ defmodule TWITTERTest do
       id = :"#{my_id}_cssa"
       user2_feed = GenServer.call(id, {:get_feed})
       IO.inspect(user2_feed, label: "user2 feed is")
-      assert user2_feed == ["test tweet for #testing"]
+      assert user2_feed == ["test tweet for #testing i love puppies"]
     end
 
     test "if user tweets it is not in a non-followers feed" do
@@ -55,7 +55,7 @@ defmodule TWITTERTest do
       pid_sender = :"#{sender}"
       new_tweets = Retweet.retweet(pid_sender)
       # assert that it is in her tweet's list
-      assert new_tweets == ["test tweet for #testing"]
+      assert new_tweets == ["test tweet for #testing i love puppies"]
     end
 
     test "if user re-tweets it is in their followers feed" do
@@ -65,7 +65,7 @@ defmodule TWITTERTest do
       id = :"#{my_id}_cssa"
       user3_feed = GenServer.call(id, {:get_feed})
       IO.inspect(user3_feed, label: "user3 feed is")
-      assert user3_feed == ["test tweet for #testing"]
+      assert user3_feed == ["test tweet for #testing i love puppies"]
     end
 
     test "if user re-tweets it is not in a non-followers feed" do
@@ -79,8 +79,14 @@ defmodule TWITTERTest do
     end
   end
 
-  # describe "Query" do
-  # end
+  describe "Query" do
+    test "query for normal word: puppies" do
+      sender = "dobra"
+      pid_sender = :"#{sender}"
+      query = "puppies"
+      Query.get_my_results(query, pid_sender)
+    end
+  end
 
   # CHANGES
   # added line new_tweets to send_tweet function for test

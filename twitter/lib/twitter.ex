@@ -248,6 +248,26 @@ defmodule Tweet do
 end
 
 defmodule Query do
+  def get_my_results(query, my_id) do
+    id = :"#{my_id}_cssa"
+    feedList = GenServer.call(id, {:get_feed})
+    IO.inspect(feedList, label: "feedList")
+
+    # # for every value in the feedlist, search the tweet than search the username
+    # # if something interesting is found append it to results
+    #
+    results = []
+
+    results =
+      for tweet <- feedList do
+        _r =
+          if(String.contains?(tweet, query) == true) do
+            IO.inspect(tweet, label: "Found")
+            _results = results ++ [tweet]
+          end
+      end
+  end
+
   def get_my_feed(my_id) do
     # Get the list of subscribers
     id = :"#{my_id}_cssa"

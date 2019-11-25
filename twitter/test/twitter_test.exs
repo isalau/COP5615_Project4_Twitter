@@ -89,6 +89,18 @@ defmodule TWITTERTest do
       assert new_tweets == :TweetToLong
     end
 
+    test "if re-tweet is empty it should pass" do
+      IO.puts("\n \n testing if user re-tweets is empty it should pass")
+      # have user2 re-tweet something
+      sender = "dobra"
+      pid_sender = :"#{sender}"
+      new_tweets = Retweet.retweet(pid_sender)
+
+      assert new_tweets == [
+               ": respond to tweet qwe: respond to tweet test tweet for #testing i love puppies"
+             ]
+    end
+
     test "if user re-tweets it is in their followers feed" do
       IO.puts("\n \n testing if user re-tweets it is in their followers feed")
       # check that user3 has tweet in feed

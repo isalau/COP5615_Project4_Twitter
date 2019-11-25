@@ -134,8 +134,13 @@ defmodule Engine do
     {:reply, {followers, subscribed, feed, tweets}, {followers, subscribed, feed, tweets}}
   end
 
-  def handle_call({:subscribed, following}, _from, {followers, subscribed, feed, tweets}) do
+  def handle_call(
+        {:subscribed, following, new_tweets},
+        _from,
+        {followers, subscribed, feed, tweets}
+      ) do
     subscribed = subscribed ++ [following]
+    feed = feed ++ new_tweets
     {:reply, {followers, subscribed, feed, tweets}, {followers, subscribed, feed, tweets}}
   end
 
@@ -194,14 +199,14 @@ defmodule Subscribe do
     pid_to = :"#{to}_cssa"
 
     # Put your name in the followers list of the person followed
-    {new_followers, _, _, _} = GenServer.call(pid_to, {:populate, pid_from})
+    {new_followers, _, _, new_tweets} = GenServer.call(pid_to, {:populate, pid_from})
 
     IO.inspect(new_followers,
       label: "The followers in the person you subscribed to has your name !"
     )
 
     # Put their name in your subscribed list
-    {_, new_subscribed, _, _} = GenServer.call(pid_from, {:subscribed, pid_to})
+    {_, new_subscribed, _, _} = GenServer.call(pid_from, {:subscribed, pid_to, new_tweets})
     IO.inspect(new_subscribed, label: "you have subscribed to #{to}")
   end
 end

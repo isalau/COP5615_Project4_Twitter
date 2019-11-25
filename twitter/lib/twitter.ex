@@ -321,6 +321,14 @@ defmodule Query do
   end
 end
 
+defmodule Feed do
+  def showfeed(sender) do
+    id = :"#{sender}_cssa"
+    user_feed = GenServer.call(id, {:get_feed})
+    IO.inspect(user_feed, label: "Your feed is ")
+  end
+end
+
 # Main
 defmodule Main do
   def main_task do
@@ -379,6 +387,10 @@ defmodule Main do
 
         if job == "Retweet" do
           Retweet.retweet(pid_sender)
+        end
+
+        if job == "Feed" do
+          Feed.showfeed(pid_sender)
         end
 
         if job == "Query" do

@@ -15,6 +15,17 @@ defmodule TWITTERTest do
       assert new_tweets == ["test tweet for #testing i love puppies"]
     end
 
+    test "if tweet is too long it should not pass" do
+      sender = "isabel"
+
+      tweet =
+        "test too long tweet  test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet  test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet  test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet  "
+
+      # added line new_tweets to send_tweet function for test
+      response = Tweet.send_tweet(sender, tweet)
+      assert response == :TweetToLong
+    end
+
     test "if user tweets it is in their followers feed" do
       IO.puts("\n \n testing if user tweets it is in their followers feed")
       # check that user2 has tweet in feed

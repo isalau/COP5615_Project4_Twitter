@@ -79,7 +79,6 @@ BUG: Not returning from terminate<br>
 [] Test having 1000 clients tweet at same time<br>
 
 ## **3) Subscribe**
-
 --> user selected subscribe from menu<br>
 [x] first ask who you want to subscribe to<br>
 [x] look that person up in supervisor<br>

@@ -165,8 +165,8 @@ defmodule Register do
     # TODO - Check if name is okay
     pid = :"#{Engine}_cssa"
     {_, new_subscribed, _, _} = GenServer.call(pid, {:register, name})
-    IO.puts("The people's list is")
-    IO.inspect(new_subscribed)
+    # IO.puts("The people's list is")
+    # IO.inspect(new_subscribed)
   end
 
   def makeKids(num) when num > 1 do
@@ -246,9 +246,17 @@ defmodule Tweet do
   def send_tweet(sender, tweet) do
     # Tell the process of sender about the tweet
     pid_sender = :"#{sender}_cssa"
-    new_tweets = GenServer.call(pid_sender, {:tweet, tweet})
-    IO.inspect(new_tweets, label: "My #{sender} tweets now")
-    new_tweets
+    tweetLength = String.length(tweet)
+
+    if(tweetLength > 280) do
+      overby = tweetLength - 280
+      IO.puts("Tweet is too long by #{overby} characters please try again. ")
+      :TweetToLong
+    else
+      new_tweets = GenServer.call(pid_sender, {:tweet, tweet})
+      IO.inspect(new_tweets, label: "My #{sender} tweets now")
+      new_tweets
+    end
   end
 
   def distribute_it(tweet, people) do
@@ -410,7 +418,15 @@ defmodule Main do
         if job == "Tweet" do
           # TODO _Add next line argument
           tweet = String.trim(IO.gets("What's on your mind? \n"))
-          GenServer.call(pid_sender, {:tweet, tweet})
+          # check to make sure tweet is only 280 or less characters
+          tweetLength = String.length(tweet)
+
+          if(tweetLength > 280) do
+            overby = tweetLength - 280
+            IO.puts("Tweet is too long by #{overby} characters please try again. ")
+          else
+            GenServer.call(pid_sender, {:tweet, tweet})
+          end
         end
 
         if job == "Subscribe" do

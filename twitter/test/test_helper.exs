@@ -24,4 +24,4 @@ pid_sender2 = :"#{"dobra"}"
 GenServer.call(pid_sender2, {:subscribe, "anshika"})
 
 # make x number of users
-Register.makeKids(10)
+# Register.makeKids(100)

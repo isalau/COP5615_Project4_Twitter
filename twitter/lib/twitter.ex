@@ -140,7 +140,6 @@ defmodule Engine do
   end
 
   def handle_call({:get_feed}, _from, {followers, subscribed, feed, tweets}) do
-    IO.inspect(feed, label: "feed")
     {:reply, feed, {followers, subscribed, feed, tweets}}
   end
 

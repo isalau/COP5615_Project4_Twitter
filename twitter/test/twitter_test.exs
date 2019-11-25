@@ -22,6 +22,11 @@ defmodule TWITTERTest do
     end
 
     test "if user tweets it is not in a non-followers feed" do
+      # check that user3 does not have tweet in feed
+      my_id = "dobra"
+      id = :"#{my_id}_cssa"
+      user3_feed = GenServer.call(id, {:get_feed})
+      assert user3_feed == []
     end
   end
 

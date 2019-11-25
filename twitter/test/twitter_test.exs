@@ -21,9 +21,19 @@ defmodule TWITTERTest do
       tweet =
         "test too long tweet  test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet  test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet  test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet test too long tweet  "
 
-      # added line new_tweets to send_tweet function for test
+      # added new checks to send_tweet function for test
       response = Tweet.send_tweet(sender, tweet)
       assert response == :TweetToLong
+    end
+
+    test "if tweet is empty it should not pass" do
+      sender = "isabel"
+
+      tweet = " "
+
+      # added new checks to send_tweet function for test
+      response = Tweet.send_tweet(sender, tweet)
+      assert response == :EmptyTweet
     end
 
     test "if user tweets it is in their followers feed" do
@@ -122,4 +132,5 @@ defmodule TWITTERTest do
   # added line new_tweets to send_tweet function for test
   # added line new_tweets to re_tweet function for test
   # added Feed module
+  # added new checks to send_tweet function for test
 end

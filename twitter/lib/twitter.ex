@@ -253,9 +253,14 @@ defmodule Tweet do
       IO.puts("Tweet is too long by #{overby} characters please try again. ")
       :TweetToLong
     else
-      new_tweets = GenServer.call(pid_sender, {:tweet, tweet})
-      IO.inspect(new_tweets, label: "My #{sender} tweets now")
-      new_tweets
+      if(tweetLength == 0 || tweet == " ") do
+        IO.puts("You cannot tweet an empty string")
+        :EmptyTweet
+      else
+        new_tweets = GenServer.call(pid_sender, {:tweet, tweet})
+        IO.inspect(new_tweets, label: "My #{sender} tweets now")
+        new_tweets
+      end
     end
   end
 

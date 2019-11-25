@@ -81,10 +81,29 @@ defmodule TWITTERTest do
 
   describe "Query" do
     test "query for normal word: puppies" do
+      IO.puts("\n \n testing query for normal word: puppies")
+
       sender = "dobra"
       pid_sender = :"#{sender}"
       query = "puppies"
-      Query.get_my_results(query, pid_sender)
+      results = Query.get_my_results(query, pid_sender)
+      assert results == ["test tweet for #testing i love puppies"]
+    end
+
+    test "query for hashtag" do
+      IO.puts("\n \n testing query for hashtag")
+      sender = "dobra"
+      my_id = :"#{sender}"
+      hashtag = "testing"
+      Query.get_hashtags(hashtag, my_id)
+    end
+
+    test "query for person" do
+      IO.puts("\n \n testing query for person")
+      sender = "anshika"
+      my_id = :"#{sender}"
+      mention = "puppies"
+      Query.get_mentions(mention, my_id)
     end
   end
 

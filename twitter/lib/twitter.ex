@@ -263,7 +263,7 @@ defmodule Query do
         _r =
           if(String.contains?(tweet, query) == true) do
             IO.inspect(tweet, label: "Found")
-            _results = results ++ [tweet]
+            _results = results ++ tweet
           end
       end
   end

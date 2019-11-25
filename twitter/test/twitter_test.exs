@@ -46,18 +46,44 @@ defmodule TWITTERTest do
     end
   end
 
-  #
-  # describe "Re-Tweet" do
-  # test "if user re-tweets it is in their tweets list" do
-  # end
-  #
-  # test "if user re-tweets it is in their followers feed" do
-  # end
-  #
-  # test "if user re-tweets it is not in a non-followers feed" do
-  # end
-  # end
-  #
+  describe "Re-Tweet" do
+    test "if user re-tweets it is in their tweets list" do
+      IO.puts("\n \n testing if user re-tweets it is in their tweets list")
+
+      # have user2 re-tweet something
+      sender = "anshika"
+      pid_sender = :"#{sender}"
+      new_tweets = Retweet.retweet(pid_sender)
+      # assert that it is in her tweet's list
+      assert new_tweets == ["test tweet for #testing"]
+    end
+
+    test "if user re-tweets it is in their followers feed" do
+      IO.puts("\n \n testing if user re-tweets it is in their followers feed")
+      # check that user3 has tweet in feed
+      my_id = "dobra"
+      id = :"#{my_id}_cssa"
+      user3_feed = GenServer.call(id, {:get_feed})
+      IO.inspect(user3_feed, label: "user3 feed is")
+      assert user3_feed == ["test tweet for #testing"]
+    end
+
+    test "if user re-tweets it is not in a non-followers feed" do
+      IO.puts("\n \n testing if user tweets it is not in a non-followers feed")
+      # check that user1 does not have tweet in feed
+      my_id = "isabel"
+      id = :"#{my_id}_cssa"
+      user1_feed = GenServer.call(id, {:get_feed})
+      IO.inspect(user1_feed, label: "user1 feed is")
+      assert user1_feed == []
+    end
+  end
+
   # describe "Query" do
   # end
+
+  # CHANGES
+  # added line new_tweets to send_tweet function for test
+  # added line new_tweets to re_tweet function for test
+  # added Feed module
 end

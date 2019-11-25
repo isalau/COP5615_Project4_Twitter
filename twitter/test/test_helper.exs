@@ -14,8 +14,11 @@ Register.reg("anshika")
 Register.reg("dobra")
 
 # subscribe them to each other
-pid_sender1 = :"#{"isabel"}"
-GenServer.call(pid_sender1, {:subscribe, "anshika"})
+# pid_sender1 = :"#{"isabel"}"
+# GenServer.call(pid_sender1, {:subscribe, "anshika"})
 
 pid_sender2 = :"#{"anshika"}"
 GenServer.call(pid_sender2, {:subscribe, "isabel"})
+
+pid_sender2 = :"#{"dobra"}"
+GenServer.call(pid_sender2, {:subscribe, "anshika"})

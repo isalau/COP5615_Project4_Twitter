@@ -212,13 +212,17 @@ defmodule Retweet do
     IO.inspect(select, label: "You Selected #{select}")
     tweet = List.keyfind(my_new_feed, select, 0)
 
-    if tweet != nil do
-      tweet = elem(tweet, 1)
-      IO.inspect(tweet, label: "You Selected this tweet")
-      GenServer.call(id, {:tweet, tweet})
-    else
-      IO.puts("can't find the tweet you want to retweet")
-    end
+    new_tweets =
+      if tweet != nil do
+        tweet = elem(tweet, 1)
+        IO.inspect(tweet, label: "You Selected this tweet")
+        new_tweets = GenServer.call(id, {:tweet, tweet})
+      else
+        IO.puts("can't find the tweet you want to retweet")
+        new_tweets = []
+      end
+
+    new_tweets
   end
 end
 

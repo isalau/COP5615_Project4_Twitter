@@ -232,7 +232,19 @@ defmodule Retweet do
       if tweet != nil do
         tweet = elem(tweet, 1)
         IO.inspect(tweet, label: "You Selected this tweet")
-        new_tweets = GenServer.call(id, {:tweet, tweet})
+
+        addedToTweet1 = Mix.Shell.IO.prompt("What would you like to add to the tweet?")
+        addedToTweet = String.trim(addedToTweet1)
+        tweetLength = String.length(addedToTweet)
+
+        if(tweetLength > 280) do
+          overby = tweetLength - 280
+          IO.puts("Tweet is too long by #{overby} characters please try again. ")
+          :TweetToLong
+        else
+          newTweet = "#{addedToTweet} : respond to tweet #{tweet}"
+          new_tweets = GenServer.call(id, {:tweet, newTweet})
+        end
       else
         IO.puts("can't find the tweet you want to retweet")
         new_tweets = []

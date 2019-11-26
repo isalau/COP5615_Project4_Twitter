@@ -135,8 +135,8 @@ defmodule Engine do
 
   def handle_call({:get_my_feed, new_feed}, _from, {followers, subscribed, feed, tweets}) do
     feed = feed ++ new_feed
-    IO.inspect(feed, label: "The feed now inside looks like")
-    IO.inspect(tweets, label: "The tweets inside look like")
+    # IO.inspect(feed, label: "The feed now inside looks like")
+    # IO.inspect(tweets, label: "The tweets inside look like")
     {:reply, {followers, subscribed, feed, tweets}, {followers, subscribed, feed, tweets}}
   end
 end
@@ -578,5 +578,5 @@ defmodule Main do
   end
 end
 
-Main.main_task()
-Main.main()
+# Main.main_task()
+# Main.main()

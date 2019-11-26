@@ -16,19 +16,19 @@ defmodule DySupervisor do
   end
 
   def start_child(name) do
-    tweets = []
-    people = []
+    _tweets = []
+    _people = []
     child_spec = Supervisor.child_spec({CSA, name}, id: name, restart: :temporary)
 
     # child_spec_2 = Supervisor.child_spec({Engine, [tweets, people, name]}, restart: :temporary)
 
     # Start CSA
-    {:ok, child} = DynamicSupervisor.start_child(__MODULE__, child_spec)
+    {:ok, _child} = DynamicSupervisor.start_child(__MODULE__, child_spec)
     # Start CSSA ####### NOT SURE ###########
     # {:ok, child} = DynamicSupervisor.start_child(__MODULE__, child_spec_2)
   end
 
-  def init(init_arg) do
+  def init(_init_arg) do
     DynamicSupervisor.init(strategy: :one_for_one)
   end
 end
@@ -90,7 +90,7 @@ defmodule Engine do
       )
   end
 
-  def init(init_arg) do
+  def init(_init_arg) do
     tweets = []
     followers = []
     subscribed = []
@@ -98,10 +98,16 @@ defmodule Engine do
     {:ok, {followers, subscribed, feed, tweets}}
   end
 
-  def handle_call({:register, name}, _from, {followers, subscribed, feed, tweets}) do
+  def handle_call({:register, name, pass}, _from, {followers, subscribed, feed, tweets}) do
     subscribed = subscribed ++ [name]
+    followers = followers ++ [{:"#{name}", pass}]
     # Register.get_people(name,people)#HERE everyone is on everyone's list
     {:reply, {followers, subscribed, feed, tweets}, {followers, subscribed, feed, tweets}}
+  end
+
+  def handle_call({:getAllUsers}, _from, {followers, subscribed, feed, tweets}) do
+    subscribed
+    {:reply, subscribed, {followers, subscribed, feed, tweets}}
   end
 
   def handle_call({:tweet, tweet}, _from, {followers, subscribed, feed, tweets}) do
@@ -150,12 +156,14 @@ defmodule Engine do
 
   def handle_call({:get_my_feed, new_feed}, _from, {followers, subscribed, feed, tweets}) do
     feed = feed ++ new_feed
+    # IO.inspect(feed, label: "The feed now inside looks like")
+    # IO.inspect(tweets, label: "The tweets inside look like")
     {:reply, {followers, subscribed, feed, tweets}, {followers, subscribed, feed, tweets}}
   end
 end
 
 defmodule Register do
-  def reg(name) do
+  def reg(name, pass) do
     # start a process with the given name - CSA
     DySupervisor.start_child(name)
 
@@ -166,28 +174,28 @@ defmodule Register do
     feed = []
     Engine.start_link([followers, subscribed, feed, tweets, name])
 
-    # Get the name on people's lst
-    # TODO - Check if name is okay
+    # Get the name on subscribed list  lst
+    # Get password name key word pair list in place of followers
     pid = :"#{Engine}_cssa"
-    {_, new_subscribed, _, _} = GenServer.call(pid, {:register, name})
-    # IO.puts("The people's list is")
-    # IO.inspect(new_subscribed)
+    {new_key_pass, new_subscribed, _, _} = GenServer.call(pid, {:register, name, pass})
+    IO.inspect(new_key_pass, label: "The key pass list is")
+    IO.inspect(new_subscribed, label: "The people's list is")
   end
 
-  def makeKids(num) when num > 1 do
+  def makeKids(num, pass) when num > 1 do
     # start a child
     numm = Integer.to_string(num)
     username = String.replace_suffix("child x", " x", numm)
-    reg(username)
+    reg(username, "pwd")
     newNum = num - 1
-    makeKids(newNum)
+    makeKids(newNum, "pwd")
   end
 
-  def makeKids(num) do
+  def makeKids(num, pass) do
     # start a child
     numm = Integer.to_string(num)
     username = String.replace_suffix("child x", " x", numm)
-    reg(username)
+    reg(username, "pwd")
   end
 end
 
@@ -216,8 +224,8 @@ defmodule Retweet do
     id = :"#{my_id}_cssa"
     {_, _, my_feed, _} = :sys.get_state(id)
     # convert the list to a keyword list
-    c = 0
-    lst = []
+    _c = 0
+    _lst = []
 
     {_, my_new_feed} =
       Enum.reduce(my_feed, {0, []}, fn x, {c, lst} ->
@@ -227,35 +235,21 @@ defmodule Retweet do
       end)
 
     IO.inspect(my_new_feed, label: "Your feed")
-    re_tweet = String.trim(IO.gets("Select a tweet from your list of tweets \n"))
+    # re_tweet = String.trim(IO.gets("Select a tweet from your list of tweets \n"))
+    re_tweet = 1
     select = :"#{re_tweet}"
     # Not checked if this works
     IO.inspect(select, label: "You Selected #{select}")
     tweet = List.keyfind(my_new_feed, select, 0)
 
-    new_tweets =
-      if tweet != nil do
-        tweet = elem(tweet, 1)
-        IO.inspect(tweet, label: "You Selected this tweet")
-
-        addedToTweet1 = Mix.Shell.IO.prompt("What would you like to add to the tweet?")
-        addedToTweet = String.trim(addedToTweet1)
-        tweetLength = String.length(addedToTweet)
-
-        if(tweetLength > 280) do
-          overby = tweetLength - 280
-          IO.puts("Re-tweet is too long by #{overby} characters please try again. ")
-          :TweetToLong
-        else
-          newTweet = "#{addedToTweet}: respond to tweet #{tweet}"
-          new_tweets = GenServer.call(id, {:tweet, newTweet})
-        end
-      else
-        IO.puts("can't find the tweet you want to retweet")
-        new_tweets = []
-      end
-
-    new_tweets
+    if tweet != nil do
+      tweet = elem(tweet, 1)
+      newTweet = "#I am retweeting: tweet #{tweet}"
+      IO.inspect(tweet, label: "You Selected this tweet")
+      GenServer.call(id, {:tweet, newTweet})
+    else
+      IO.puts("can't find the tweet you want to retweet")
+    end
   end
 end
 
@@ -290,6 +284,31 @@ defmodule Tweet do
       feed = GenServer.call(pid, {:got_mssg, tweet})
       IO.inspect(feed, label: "My #{elem} news feeds after getting the tweet")
     end
+  end
+
+  def sendManyTweets(num, tweets_db) do
+    # for every user
+    pid = :"#{Engine}_cssa"
+    all_users = GenServer.call(pid, {:getAllUsers})
+
+    for user <- all_users do
+      # send num amount of tweets
+      simtweet(user, num, tweets_db)
+    end
+  end
+
+  def simtweet(user, num, tweets_db) when num > 1 do
+    pid_user = :"#{user}"
+    # from tweets_db
+    tweet = Enum.at(tweets_db, 0)
+    GenServer.call(pid_user, {:tweet, tweet})
+  end
+
+  def simtweet(user, num, tweets_db) do
+    pid_user = :"#{user}"
+    # from tweets_db
+    tweet = Enum.at(tweets_db, 0)
+    GenServer.call(pid_user, {:tweet, tweet})
   end
 end
 
@@ -420,87 +439,119 @@ defmodule Main do
   end
 
   def main do
-    task = String.trim(IO.gets("Want to Register or Login? \n"))
+    #   task = String.trim(IO.gets("Want to Register or Login? \n"))
 
-    if task == "Register" do
-      action = String.trim(IO.gets("Your name ? \n"))
-      # IO.inspect(action)
-      Register.reg(action)
-    end
+    runSimulation()
 
-    if task == "Login" do
-      {_, tot_users, _, _} = :sys.get_state(:"#{Engine}_cssa")
-      IO.inspect(tot_users, label: "Total users list in Login")
-      sender = String.trim(IO.gets("And your username is ? \n"))
+    #   if task == "Register" do
+    #     action = String.trim(IO.gets("Your name ? \n"))
+    #     # IO.inspect(action)
+    #     Register.reg(action)
+    #   end
+    #
+    #   if task == "Login" do
+    #     {_, tot_users, _, _} = :sys.get_state(:"#{Engine}_cssa")
+    #     IO.inspect(tot_users, label: "Total users list in Login")
+    #     sender = String.trim(IO.gets("And your username is ? \n"))
+    #
+    #     if sender in tot_users do
+    #       # After checking show
+    #       IO.puts("Welcome!")
+    #       pid_sender = :"#{sender}"
+    #
+    #       job =
+    #         String.trim(
+    #           IO.gets("What wouid you like to do - Tweet , Subscribe, Retweet or Query? \n")
+    #         )
+    #
+    #       # Need more jobs to do
+    #       if job == "Tweet" do
+    #         # TODO _Add next line argument
+    #         tweet = String.trim(IO.gets("What's on your mind? \n"))
+    #         # check to make sure tweet is only 280 or less characters
+    #         tweetLength = String.length(tweet)
+    #
+    #         if(tweetLength > 280) do
+    #           overby = tweetLength - 280
+    #           IO.puts("Tweet is too long by #{overby} characters please try again. ")
+    #         else
+    #           GenServer.call(pid_sender, {:tweet, tweet})
+    #         end
+    #       end
+    #
+    #       if job == "Subscribe" do
+    #         tot_users = tot_users -- [sender]
+    #         IO.inspect(tot_users, label: "People you can subscribe")
+    #         subs = String.trim(IO.gets("Who do you want to subscribe to? \n"))
+    #         # CHeck if subs exist in system
+    #         if subs in tot_users do
+    #           GenServer.call(pid_sender, {:subscribe, subs})
+    #         else
+    #           IO.puts("Person you are trying to subscribe doesn't exist")
+    #         end
+    #       end
+    #
+    #       if job == "Retweet" do
+    #         Retweet.retweet(pid_sender)
+    #       end
+    #
+    #       if job == "Feed" do
+    #         Feed.showfeed(pid_sender)
+    #       end
+    #
+    #       if job == "Query" do
+    #         query = String.trim(IO.gets("What is your query:  Tweets , @mentions or #hashtags? \n"))
+    #
+    #         if query == "Tweets" do
+    #           Query.get_my_feed(pid_sender)
+    #         end
+    #
+    #         if query == "#hashtags" do
+    #           hashtag = String.trim(IO.gets("Which trend are you looking for? \n"))
+    #           GenServer.call(pid_sender, {:hashtag, hashtag})
+    #         end
+    #
+    #         if query == "@mentions" do
+    #           mention = String.trim(IO.gets("Whose mention are you looking for? \n"))
+    #           GenServer.call(pid_sender, {:mention, mention})
+    #         end
+    #       end
+    #     else
+    #       IO.puts("Wrong username or password")
+    #     end
+    #   end
+    #
+    #   main()
+  end
 
-      if sender in tot_users do
-        # After checking show
-        IO.puts("Welcome!")
-        pid_sender = :"#{sender}"
+  def runSimulation() do
+    # get number of users --> makeKids(numUsers)
+    Register.makeKids(5, "pwd")
+    # get number of fake tweets --> makeFakeTweets(numTweets)
+    testTweets_db = []
+    testTweets = makeFakeTweets(3, testTweets_db)
+    IO.inspect(testTweets, label: "test Tweets")
+    # subscribe
+    # sends that many tweets per user
+    # re-tweet
+    # query
+    # feed
+  end
 
-        job =
-          String.trim(
-            IO.gets("What wouid you like to do - Tweet , Subscribe, Retweet or Query? \n")
-          )
+  def makeFakeTweets(num, testTweets_db) when num > 1 do
+    numm = Integer.to_string(num)
+    numtweet = String.replace_suffix("tweet x", " x", numm)
+    testTweet = "We are making a test tweet #{numtweet}"
+    testTweets_db = testTweets_db ++ [testTweet]
+    newNum = num - 1
+    makeFakeTweets(newNum, testTweets_db)
+  end
 
-        # Need more jobs to do
-        if job == "Tweet" do
-          # TODO _Add next line argument
-          tweet = String.trim(IO.gets("What's on your mind? \n"))
-          # check to make sure tweet is only 280 or less characters
-          tweetLength = String.length(tweet)
-
-          if(tweetLength > 280) do
-            overby = tweetLength - 280
-            IO.puts("Tweet is too long by #{overby} characters please try again. ")
-          else
-            GenServer.call(pid_sender, {:tweet, tweet})
-          end
-        end
-
-        if job == "Subscribe" do
-          tot_users = tot_users -- [sender]
-          IO.inspect(tot_users, label: "People you can subscribe")
-          subs = String.trim(IO.gets("Who do you want to subscribe to? \n"))
-          # CHeck if subs exist in system
-          if subs in tot_users do
-            GenServer.call(pid_sender, {:subscribe, subs})
-          else
-            IO.puts("Person you are trying to subscribe doesn't exist")
-          end
-        end
-
-        if job == "Retweet" do
-          Retweet.retweet(pid_sender)
-        end
-
-        if job == "Feed" do
-          Feed.showfeed(pid_sender)
-        end
-
-        if job == "Query" do
-          query = String.trim(IO.gets("What is your query:  Tweets , @mentions or #hashtags? \n"))
-
-          if query == "Tweets" do
-            Query.get_my_feed(pid_sender)
-          end
-
-          if query == "#hashtags" do
-            hashtag = String.trim(IO.gets("Which trend are you looking for? \n"))
-            GenServer.call(pid_sender, {:hashtag, hashtag})
-          end
-
-          if query == "@mentions" do
-            mention = String.trim(IO.gets("Whose mention are you looking for? \n"))
-            GenServer.call(pid_sender, {:mention, mention})
-          end
-        end
-      else
-        IO.puts("Wrong username or password")
-      end
-    end
-
-    main()
+  def makeFakeTweets(num, testTweets_db) do
+    numm = Integer.to_string(num)
+    numtweet = String.replace_suffix("tweet x", " x", numm)
+    testTweet = "We are making a test tweet #{numtweet}"
+    _testTweets_db = testTweets_db ++ [testTweet]
   end
 end
 

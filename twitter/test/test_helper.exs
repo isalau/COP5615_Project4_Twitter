@@ -9,9 +9,9 @@ feed = []
 {:ok, _pid} = Engine.start_link([followers, subscribed, feed, tweets, Engine])
 
 # make three users
-Register.reg("isabel")
-Register.reg("anshika")
-Register.reg("dobra")
+Register.reg("isabel", "p")
+Register.reg("anshika", "p")
+Register.reg("dobra", "p")
 
 # subscribe them to each other
 # pid_sender1 = :"#{"isabel"}"

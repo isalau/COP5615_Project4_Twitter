@@ -622,7 +622,7 @@ defmodule Main do
   def makeFakeTweets(num, testTweets_db) when num > 1 do
     numm = Integer.to_string(num)
     numtweet = String.replace_suffix("tweet x", " x", numm)
-    testTweet = "Test tweet #{numtweet}"
+    testTweet = "Test #{numtweet}"
     testTweets_db = testTweets_db ++ [testTweet]
     newNum = num - 1
     makeFakeTweets(newNum, testTweets_db)
@@ -631,7 +631,7 @@ defmodule Main do
   def makeFakeTweets(num, testTweets_db) do
     numm = Integer.to_string(num)
     numtweet = String.replace_suffix("tweet x", " x", numm)
-    testTweet = "Test tweet #{numtweet}"
+    testTweet = "Test #{numtweet}"
     _testTweets_db = testTweets_db ++ [testTweet]
   end
 end

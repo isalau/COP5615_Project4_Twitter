@@ -217,6 +217,48 @@ defmodule Subscribe do
     {_, new_subscribed, _, _} = GenServer.call(pid_from, {:subscribed, pid_to, new_tweets})
     IO.inspect(new_subscribed, label: "you have subscribed to #{to}")
   end
+
+  def subscribeMany(num_user) do
+    # for every user
+    pid = :"#{Engine}_cssa"
+    all_users = GenServer.call(pid, {:getAllUsers})
+
+    for user <- all_users do
+      # pick a random number of people to subscribe too
+      numToSub = Enum.random(1..num_user)
+      subRandom(user, numToSub, num_user)
+    end
+  end
+
+  def subRandom(user, numOfSub, num_user) when numOfSub > 1 do
+    # pick a random person to subscribe to
+    pid = :"#{Engine}_cssa"
+    all_users = GenServer.call(pid, {:getAllUsers})
+    num_end = num_user - 1
+    numToSub = Enum.random(0..num_end)
+    subs = Enum.at(all_users, numToSub)
+    IO.puts("#{user} pick #{numToSub} from the hat wants to subscribe to #{subs}")
+    # TO DO: Add check to see if you already are subscribed
+    # pid_sender = :"#{user}"
+    # GenServer.call(pid_sender, {:subscribe, subs})
+
+    numOfSub = numOfSub - 1
+    subRandom(user, numOfSub, num_user)
+  end
+
+  def subRandom(user, numOfSub, num_user) do
+    # pick a random person to subscribe to
+    pid = :"#{Engine}_cssa"
+    all_users = GenServer.call(pid, {:getAllUsers})
+    numToSub = Enum.random(1..num_user)
+    subs = Enum.at(all_users, numToSub)
+    IO.puts("#{user} wants to subscribe to #{subs}")
+    # TO DO: Add check to see if you already are subscribed
+
+    # pid_sender = :"#{user}"
+    # # Subscribe.subscribe(user, subscribe)
+    # GenServer.call(pid_sender, {:subscribe, subs})
+  end
 end
 
 defmodule Retweet do
@@ -298,7 +340,7 @@ defmodule Tweet do
   end
 
   def simtweet(user, num, tweets_db) when num > 1 do
-    IO.puts("#{user} sending tweet")
+    # IO.puts("#{user} sending tweet")
     pid_user = :"#{user}"
     # from tweets_db
     numOfTweetsInDb = length(tweets_db)
@@ -317,7 +359,7 @@ defmodule Tweet do
   end
 
   def simtweet(user, num, tweets_db) do
-    IO.puts("#{user} sending tweet")
+    # IO.puts("#{user} sending tweet")
     pid_user = :"#{user}"
     # from tweets_db
     numOfTweetsInDb = length(tweets_db)
@@ -463,8 +505,12 @@ defmodule Main do
 
   def main do
     #   task = String.trim(IO.gets("Want to Register or Login? \n"))
-
-    runSimulation()
+    # Make them into integers
+    # num_user = String.to_integer(Enum.at(arguments, 0))
+    num_user = 3
+    # num_msg = String.to_integer(Enum.at(arguments, 1))
+    num_msg = 4
+    runSimulation(num_user, num_msg)
 
     #   if task == "Register" do
     #     action = String.trim(IO.gets("Your name ? \n"))
@@ -547,15 +593,17 @@ defmodule Main do
     #   main()
   end
 
-  def runSimulation() do
+  def runSimulation(num_user, num_msg) do
     # get number of users --> makeKids(numUsers)
-    Register.makeKids(5, "pwd")
+    Register.makeKids(num_user, "pwd")
     # get number of fake tweets --> makeFakeTweets(numTweets)
     testTweets_db = []
     testTweets = makeFakeTweets(3, testTweets_db)
-    # IO.inspect(testTweets, label: "test Tweets")
-    Tweet.sendManyTweets(6, testTweets)
     # subscribe
+    Subscribe.subscribeMany(num_user)
+    # IO.inspect(testTweets, label: "test Tweets")
+    Tweet.sendManyTweets(num_msg, testTweets)
+
     # sends that many tweets per user
     # re-tweet
     # query
@@ -578,6 +626,9 @@ defmodule Main do
     _testTweets_db = testTweets_db ++ [testTweet]
   end
 end
+
+# Take command line arguments
+arguments = System.argv()
 
 Main.main_task()
 Main.main()

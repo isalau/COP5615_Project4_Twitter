@@ -112,10 +112,10 @@ defmodule Engine do
 
   def handle_call({:tweet, tweet}, _from, {followers, subscribed, feed, tweets}) do
     tweets = tweets ++ [tweet]
-    IO.puts("In Engine tweet")
+    # IO.puts("In Engine tweet")
 
     if followers != [] do
-      IO.puts("Im distributing tweets")
+      # IO.puts("Im distributing tweets")
       Tweet.distribute_it(tweet, followers)
     end
 
@@ -131,8 +131,8 @@ defmodule Engine do
   def handle_call({:got_mssg, tweet}, _from, {followers, subscribed, feed, tweets}) do
     feed = feed ++ [tweet]
     # pid = self()
-    IO.puts("My tweets are ")
-    IO.inspect(tweets)
+    # IO.puts("My tweets are ")
+    # IO.inspect(tweets)
     {:reply, feed, {followers, subscribed, feed, tweets}}
   end
 
@@ -179,8 +179,8 @@ defmodule Register do
     # Get password name key word pair list in place of followers
     pid = :"#{Engine}_cssa"
     {new_key_pass, new_subscribed, _, _} = GenServer.call(pid, {:register, name, pass})
-    IO.inspect(new_key_pass, label: "The key pass list is")
-    IO.inspect(new_subscribed, label: "The people's list is")
+    # IO.inspect(new_key_pass, label: "The key pass list is")
+    # IO.inspect(new_subscribed, label: "The people's list is")
   end
 
   def makeKids(num, pass) when num > 1 do
@@ -203,7 +203,7 @@ end
 defmodule Subscribe do
   def subscribe(from, to) do
     # Populate people's list (PLUG)
-    IO.puts("Lets start subscribin !")
+    # IO.puts("Lets start subscribin !")
     pid_from = :"#{from}_cssa"
     pid_to = :"#{to}_cssa"
 
@@ -512,13 +512,13 @@ defmodule Main do
     {:ok, pid} = Engine.start_link([followers, subscribed, feed, tweets, Engine])
   end
 
-  def main do
+  def main(arguments) do
     #   task = String.trim(IO.gets("Want to Register or Login? \n"))
     # Make them into integers
-    # num_user = String.to_integer(Enum.at(arguments, 0))
-    num_user = 3
-    # num_msg = String.to_integer(Enum.at(arguments, 1))
-    num_msg = 4
+    num_user = String.to_integer(Enum.at(arguments, 0))
+    # num_user = 3
+    num_msg = String.to_integer(Enum.at(arguments, 1))
+    # num_msg = 4
     runSimulation(num_user, num_msg)
 
     #   if task == "Register" do
@@ -607,7 +607,7 @@ defmodule Main do
     Register.makeKids(num_user, "pwd")
     # get number of fake tweets --> makeFakeTweets(numTweets)
     testTweets_db = []
-    testTweets = makeFakeTweets(3, testTweets_db)
+    testTweets = makeFakeTweets(num_msg, testTweets_db)
     # subscribe
     Subscribe.subscribeMany(num_user)
     # IO.inspect(testTweets, label: "test Tweets")
@@ -637,7 +637,7 @@ defmodule Main do
 end
 
 # Take command line arguments
-_arguments = System.argv()
+arguments = System.argv()
 
 Main.main_task()
-Main.main()
+Main.main(arguments)

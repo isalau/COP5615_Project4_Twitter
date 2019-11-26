@@ -247,13 +247,15 @@ defmodule Subscribe do
   end
 
   def subRandom(user, numOfSub, num_user) do
-    # pick a random person to subscribe to
     pid = :"#{Engine}_cssa"
     all_users = GenServer.call(pid, {:getAllUsers})
-    numToSub = Enum.random(1..num_user)
+    num_end = num_user - 1
+    numToSub = Enum.random(0..num_end)
     subs = Enum.at(all_users, numToSub)
-    IO.puts("#{user} wants to subscribe to #{subs}")
+    IO.puts("#{user} pick #{numToSub} from the hat wants to subscribe to #{subs}")
     # TO DO: Add check to see if you already are subscribed
+    # pid_sender = :"#{user}"
+    # GenServer.call(pid_sender, {:subscribe, subs})
 
     # pid_sender = :"#{user}"
     # # Subscribe.subscribe(user, subscribe)

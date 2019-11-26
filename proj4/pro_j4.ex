@@ -247,8 +247,7 @@ defmodule Subscribe do
 
     for user <- all_users do
       # pick a random number of people to subscribe too
-      # numToSub = Enum.random(1..num_user)
-      numToSub = 2
+      numToSub = Enum.random(1..num_user)
       subRandom(user, numToSub, num_user)
     end
   end

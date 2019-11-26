@@ -653,108 +653,108 @@ defmodule Main do
     {:ok, pid} = Engine.start_link([followers, subscribed, feed, tweets, Engine])
   end
 
-  def main(arguments) do
-    # Make them into integers
-    num_user = String.to_integer(Enum.at(arguments, 0))
-    # num_user = 3
-    num_msg = String.to_integer(Enum.at(arguments, 1))
-    # num_msg = 4
-    runSimulation(num_user, num_msg)
-
-    # task = String.trim(IO.gets("Want to Register or Login? \n"))
-    #
-    # if task == "Register" do
-    #   {_, tot_users, _, _} = :sys.get_state(:"#{Engine}_cssa")
-    #   action = String.trim(IO.gets("Your name ? \n"))
-    #
-    #   if action in tot_users do
-    #     IO.puts("username already exists")
-    #   else
-    #     pass = String.trim(IO.gets("Your password? \n"))
-    #     Register.reg(action, pass)
-    #   end
-    # end
-    #
-    # if task == "Login" do
-    #   {pass_users, tot_users, _, _} = :sys.get_state(:"#{Engine}_cssa")
-    #   IO.inspect(tot_users, label: "Total users list in Login")
-    #   sender = String.trim(IO.gets("Your username is ? \n"))
-    #
-    #   if sender in tot_users do
-    #     # After checking show
-    #     pass = String.trim(IO.gets("And your password ? \n"))
-    #     pid_sender = :"#{sender}"
-    #     {_, pass2} = List.keyfind(pass_users, pid_sender, 0)
-    #
-    #     if pass2 == pass do
-    #       IO.puts("Welcome!")
-    #
-    #       job =
-    #         String.trim(
-    #           IO.gets(
-    #             "What wouid you like to do - Tweet,Delete,Subscribe,Retweet,Feed or Query? \n"
-    #           )
-    #         )
-    #
-    #       # Need more jobs to do
-    #       if job == "Tweet" do
-    #         # TODO _Add next line argument
-    #         tweet = String.trim(IO.gets("What's on your mind? \n"))
-    #         GenServer.call(pid_sender, {:tweet, tweet})
-    #       end
-    #
-    #       if job == "Subscribe" do
-    #         tot_users = tot_users -- [sender]
-    #         IO.inspect(tot_users, label: "People you can subscribe")
-    #         subs = String.trim(IO.gets("Who do you want to subscribe to? \n"))
-    #         # CHeck if subs exist in system
-    #         if subs in tot_users do
-    #           GenServer.call(pid_sender, {:subscribe, subs})
-    #         else
-    #           IO.puts("Person you are trying to subscribe doesn't exist")
-    #         end
-    #       end
-    #
-    #       if job == "Retweet" do
-    #         Retweet.retweet(pid_sender)
-    #       end
-    #
-    #       if job == "Delete" do
-    #         Delete.deleteUser(pid_sender)
-    #       end
-    #
-    #       if job == "Query" do
-    #         query =
-    #           String.trim(IO.gets("What is your query:  Tweets , @mentions or #hashtags? \n"))
-    #
-    #         if query == "Tweets" do
-    #           Query.get_my_results(pid_sender)
-    #         end
-    #
-    #         if query == "#hashtags" do
-    #           hashtag = String.trim(IO.gets("Which trend are you looking for? \n"))
-    #           GenServer.call(pid_sender, {:hashtag, hashtag})
-    #         end
-    #
-    #         if query == "@mentions" do
-    #           mention = String.trim(IO.gets("Whose mention are you looking for? \n"))
-    #           GenServer.call(pid_sender, {:mention, mention})
-    #         end
-    #       end
-    #
-    #       if job == "Feed" do
-    #         Feed.showfeed(pid_sender)
-    #       end
-    #     else
-    #       IO.puts("Wrong password")
-    #     end
-    #   else
-    #     IO.puts("Wrong username")
-    #   end
-    # end
-    #
-    # main()
-  end
+  # def main(arguments) do
+  #   # Make them into integers
+  #   num_user = String.to_integer(Enum.at(arguments, 0))
+  #   # num_user = 3
+  #   num_msg = String.to_integer(Enum.at(arguments, 1))
+  #   # num_msg = 4
+  #   runSimulation(num_user, num_msg)
+  #
+  #   # task = String.trim(IO.gets("Want to Register or Login? \n"))
+  #   #
+  #   # if task == "Register" do
+  #   #   {_, tot_users, _, _} = :sys.get_state(:"#{Engine}_cssa")
+  #   #   action = String.trim(IO.gets("Your name ? \n"))
+  #   #
+  #   #   if action in tot_users do
+  #   #     IO.puts("username already exists")
+  #   #   else
+  #   #     pass = String.trim(IO.gets("Your password? \n"))
+  #   #     Register.reg(action, pass)
+  #   #   end
+  #   # end
+  #   #
+  #   # if task == "Login" do
+  #   #   {pass_users, tot_users, _, _} = :sys.get_state(:"#{Engine}_cssa")
+  #   #   IO.inspect(tot_users, label: "Total users list in Login")
+  #   #   sender = String.trim(IO.gets("Your username is ? \n"))
+  #   #
+  #   #   if sender in tot_users do
+  #   #     # After checking show
+  #   #     pass = String.trim(IO.gets("And your password ? \n"))
+  #   #     pid_sender = :"#{sender}"
+  #   #     {_, pass2} = List.keyfind(pass_users, pid_sender, 0)
+  #   #
+  #   #     if pass2 == pass do
+  #   #       IO.puts("Welcome!")
+  #   #
+  #   #       job =
+  #   #         String.trim(
+  #   #           IO.gets(
+  #   #             "What wouid you like to do - Tweet,Delete,Subscribe,Retweet,Feed or Query? \n"
+  #   #           )
+  #   #         )
+  #   #
+  #   #       # Need more jobs to do
+  #   #       if job == "Tweet" do
+  #   #         # TODO _Add next line argument
+  #   #         tweet = String.trim(IO.gets("What's on your mind? \n"))
+  #   #         GenServer.call(pid_sender, {:tweet, tweet})
+  #   #       end
+  #   #
+  #   #       if job == "Subscribe" do
+  #   #         tot_users = tot_users -- [sender]
+  #   #         IO.inspect(tot_users, label: "People you can subscribe")
+  #   #         subs = String.trim(IO.gets("Who do you want to subscribe to? \n"))
+  #   #         # CHeck if subs exist in system
+  #   #         if subs in tot_users do
+  #   #           GenServer.call(pid_sender, {:subscribe, subs})
+  #   #         else
+  #   #           IO.puts("Person you are trying to subscribe doesn't exist")
+  #   #         end
+  #   #       end
+  #   #
+  #   #       if job == "Retweet" do
+  #   #         Retweet.retweet(pid_sender)
+  #   #       end
+  #   #
+  #   #       if job == "Delete" do
+  #   #         Delete.deleteUser(pid_sender)
+  #   #       end
+  #   #
+  #   #       if job == "Query" do
+  #   #         query =
+  #   #           String.trim(IO.gets("What is your query:  Tweets , @mentions or #hashtags? \n"))
+  #   #
+  #   #         if query == "Tweets" do
+  #   #           Query.get_my_results(pid_sender)
+  #   #         end
+  #   #
+  #   #         if query == "#hashtags" do
+  #   #           hashtag = String.trim(IO.gets("Which trend are you looking for? \n"))
+  #   #           GenServer.call(pid_sender, {:hashtag, hashtag})
+  #   #         end
+  #   #
+  #   #         if query == "@mentions" do
+  #   #           mention = String.trim(IO.gets("Whose mention are you looking for? \n"))
+  #   #           GenServer.call(pid_sender, {:mention, mention})
+  #   #         end
+  #   #       end
+  #   #
+  #   #       if job == "Feed" do
+  #   #         Feed.showfeed(pid_sender)
+  #   #       end
+  #   #     else
+  #   #       IO.puts("Wrong password")
+  #   #     end
+  #   #   else
+  #   #     IO.puts("Wrong username")
+  #   #   end
+  #   # end
+  #   #
+  #   # main()
+  # end
 
   def runSimulation(num_user, num_msg) do
     # get number of users --> makeKids(numUsers)
@@ -790,8 +790,9 @@ defmodule Main do
   end
 end
 
-# Take command line arguments
-arguments = System.argv()
-
-Main.main_task()
-Main.main(arguments)
+#
+# # Take command line arguments
+# arguments = System.argv()
+#
+# Main.main_task()
+# Main.main(arguments)

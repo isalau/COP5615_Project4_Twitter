@@ -337,6 +337,8 @@ defmodule Query do
               _results = results ++ tweet
             end
         end
+
+      results = List.flatten(Enum.filter(results, fn x -> x != nil end))
     end
   end
 

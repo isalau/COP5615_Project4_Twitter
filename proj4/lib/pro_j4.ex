@@ -1,902 +1,796 @@
+defmodule PROJ4 do
+  @moduledoc """
+  Documentation for TWITTER.
+  """
+
+  def hello do
+    :world
+  end
+end
+
 defmodule DySupervisor do
   use DynamicSupervisor
 
   def start_link(init_arg) do
-    IO.puts("Its here in DynamicSupervisor")
     {:ok, _pid} = DynamicSupervisor.start_link(__MODULE__, init_arg, name: __MODULE__)
   end
 
-  # state = [username, password]
-  def start_child(user_name, password) do
-    child_spec =
-      Supervisor.child_spec(
-        {User, [user_name, password]},
-        id: user_name,
-        restart: :temporary
+  def start_child(name) do
+    _tweets = []
+    _people = []
+    child_spec = Supervisor.child_spec({CSA, name}, id: name, restart: :temporary)
+
+    # child_spec_2 = Supervisor.child_spec({Engine, [tweets, people, name]}, restart: :temporary)
+
+    # Start CSA
+    {:ok, _child} = DynamicSupervisor.start_child(__MODULE__, child_spec)
+    # Start CSSA ####### NOT SURE ###########
+    # {:ok, child} = DynamicSupervisor.start_child(__MODULE__, child_spec_2)
+  end
+
+  def init(_init_arg) do
+    DynamicSupervisor.init(strategy: :one_for_one)
+  end
+end
+
+defmodule CSA do
+  use GenServer
+
+  def start_link(name) do
+    {:ok, _pid} =
+      GenServer.start_link(__MODULE__, name,
+        # Check - Haven't given any state to child except name
+        name: :"#{name}"
       )
 
-    {:ok, _child} = DynamicSupervisor.start_child(__MODULE__, child_spec)
+    # Check 2 - should we store one state eleme in tuple
   end
 
-  def init(_init_arg) do
-    DynamicSupervisor.init(strategy: :one_for_one)
+  def init(name) do
+    # Trigger the CSSA
+
+    {:ok, name}
+  end
+
+  def handle_call({:tweet, mssg}, _from, name) do
+    Tweet.send_tweet(name, mssg)
+    {:reply, :ok, name}
+  end
+
+  def handle_call({:subscribe, subs}, _from, name) do
+    Subscribe.subscribe(name, subs)
+    {:reply, :ok, name}
+  end
+
+  def handle_call({:retweet}, _from, name) do
+    Retweet.retweet(name)
+    {:reply, :ok, name}
+  end
+
+  def handle_call({:hashtag, hashtag}, _from, name) do
+    Query.get_hashtags(hashtag, name)
+    {:reply, :ok, name}
+  end
+
+  def handle_call({:mention, mention}, _from, name) do
+    Query.get_mentions(mention, name)
+    {:reply, :ok, name}
   end
 end
 
-defmodule EngineSupervisor do
-  use DynamicSupervisor
-
-  def start_link(opts) do
-    IO.puts("Its here in EngineSupervisor")
-    {:ok, _pid} = DynamicSupervisor.start_link(__MODULE__, opts, name: __MODULE__)
-  end
-
-  def start_child(_opts) do
-    # state = [[username, password, subscritionList, followersList, usersTweets, feedList],[username, password, subscritionList, followersList, usersTweets, feedList],[username, password, subscritionList, followersList, usersTweets, feedList]]
-    child_spec = Supervisor.child_spec({Engine, []}, id: :engine, restart: :temporary)
-
-    {:ok, _child} = DynamicSupervisor.start_child(__MODULE__, child_spec)
-  end
-
-  def init(_init_arg) do
-    DynamicSupervisor.init(strategy: :one_for_one)
-  end
-end
-
+# Started by main
 defmodule Engine do
   use GenServer
-  # state has all the current {usernames, passwords}, allTweets
-  # state = username, password, subscritionList, followersList, usersTweets,feedList
-  def start_link(state) do
-    GenServer.start_link(__MODULE__, state, name: __MODULE__)
+
+  def start_link([followers, subscribed, feed, tweets, name]) do
+    # new_name = name_cssa
+    {:ok, _pid} =
+      GenServer.start_link(__MODULE__, {followers, subscribed, feed, tweets},
+        name: :"#{name}_cssa"
+      )
   end
 
-  @impl true
-  def init(stack) do
-    {:ok, stack}
+  def init(init_arg) do
+    tweets = []
+    followers = []
+    subscribed = []
+    feed = []
+    {:ok, {followers, subscribed, feed, tweets}}
   end
 
-  @impl true
-  def handle_call({:getUsers}, _from, state) do
-    # IO.inspect(state, label: "Engine state")
-
-    usersLists =
-      Enum.flat_map(state, fn cssa ->
-        [username, _password, _subscritionList, _followersList, _usersTweets, _feedList] = cssa
-        [username]
-      end)
-
-    # IO.inspect(usersLists, label: "usersLists")
-
-    {:reply, usersLists, state}
+  def handle_call({:register, name, pass}, _from, {followers, subscribed, feed, tweets}) do
+    subscribed = subscribed ++ [name]
+    followers = followers ++ [{:"#{name}", pass}]
+    # Register.get_people(name,people)#HERE everyone is on everyone's list
+    {:reply, {followers, subscribed, feed, tweets}, {followers, subscribed, feed, tweets}}
   end
 
-  @impl true
-  def handle_call({:getSubscribers, userName}, _from, state) do
-    # IO.inspect(state, label: "Engine state")
-
-    subsList =
-      for user <- state do
-        [username, _password, subscritionList, _followersList, _usersTweets, _feedList] = user
-
-        if(username == userName) do
-          subscritionList
-        end
-      end
-
-    # IO.inspect(usersLists, label: "usersLists")
-
-    {:reply, subsList, state}
+  def handle_call({:Unregister, name}, _from, {followers, subscribed, feed, tweets}) do
+    nm = Atom.to_string(name)
+    subscribed = subscribed -- [nm]
+    followers = List.keydelete(followers, name, 0)
+    # Register.get_people(name,people)#HERE everyone is on everyone's list
+    {:reply, {followers, subscribed, feed, tweets}, {followers, subscribed, feed, tweets}}
   end
 
-  @impl true
-  def handle_call({:getFeedList, userName}, _from, state) do
-    # IO.inspect(state, label: "Engine state")
-
-    fList =
-      for user <- state do
-        [username, _password, _subscritionList, _followersList, _usersTweets, feedList] = user
-
-        if(username == userName) do
-          feedList
-        end
-      end
-
-    usersFeed = List.flatten(Enum.filter(fList, fn x -> x != nil end))
-    {:reply, usersFeed, state}
+  def handle_info(:kill_me_pls, {followers, subscribed, feed, tweets}) do
+    IO.puts("Inside Killing myself")
+    {:stop, :normal, {followers, subscribed, feed, tweets}}
   end
 
-  @impl true
-  def handle_cast({:addUser, [username, password]}, state) do
-    # CSSA = [username, password, subscritionList, followersList, usersTweets, feedList]
-
-    # for testing
-    init_tweet = {"init feed tweet #testing123", "wise_one"}
-    # for testing
-    init_subscribed = "testUser"
-    newCSSA = [[username, password, [init_subscribed], [], [init_tweet], []]]
-    new_state = state ++ newCSSA
-
-    {:noreply, new_state}
+  def terminate(_, {followers, subscribed, feed, tweets}) do
+    IO.inspect("Look! I'm dead.")
   end
 
-  @impl true
-  def handle_cast({:addToSubscribeList, follower, toBeFollowed}, state) do
-    new_state =
-      for user <- state do
-        [username, password, subscritionList, followersList, usersTweets, feedList] = user
-
-        if(username == follower) do
-          newsubscritionList = subscritionList ++ [toBeFollowed]
-          _x = [username, password, newsubscritionList, followersList, usersTweets, feedList]
-        else
-          [username, password, subscritionList, followersList, usersTweets, feedList]
-        end
-      end
-
-    {:noreply, new_state}
+  def handle_call({:Remove_me, follower}, _from, {followers, subscribed, feed, tweets}) do
+    followers = followers -- [follower]
+    {:reply, followers, {followers, subscribed, feed, tweets}}
   end
 
-  @impl true
-  def handle_cast({:addSubToFeed, follower, toBeFollowed}, state) do
-    new_state =
-      for user <- state do
-        [username, password, subscritionList, followersList, usersTweets, feedList] = user
-
-        if(username == follower) do
-          newTweetsForFeed = getUsersTweets(state, toBeFollowed)
-          newFeedList = feedList ++ List.flatten(newTweetsForFeed)
-          _x = [username, password, subscritionList, followersList, usersTweets, newFeedList]
-        else
-          [username, password, subscritionList, followersList, usersTweets, feedList]
-        end
-      end
-
-    {:noreply, new_state}
+  def handle_call({:getAllUsers}, _from, {followers, subscribed, feed, tweets}) do
+    subscribed
+    {:reply, subscribed, {followers, subscribed, feed, tweets}}
   end
 
-  @impl true
-  def handle_cast({:addFollower, follower, toBeFollowed}, state) do
-    new_state =
-      for user <- state do
-        [username, password, subscritionList, followersList, usersTweets, feedList] = user
+  def handle_call({:tweet, tweet}, _from, {followers, subscribed, feed, tweets}) do
+    tweets = tweets ++ [tweet]
 
-        if(username == toBeFollowed) do
-          newFollowersList = followersList ++ [follower]
-          _x = [username, password, subscritionList, newFollowersList, usersTweets, feedList]
-        else
-          [username, password, subscritionList, followersList, usersTweets, feedList]
-        end
-      end
-
-    {:noreply, new_state}
-  end
-
-  @impl true
-  def handle_cast({:updateUser, username, new_state}, state) do
-    # maybe update state in engine haven't decided yet
-    # call user back to update their state
-    GenServer.cast(:"#{username}", {:updateState, new_state})
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_cast({:removeUser, user_state}, state) do
-    user_name = Enum.at(user_state, 0)
-
-    _new_state = state
-
-    new_state =
-      for x <- state do
-        [username, _password, _subscritionList, _followersList, _usersTweets, _feedList] = x
-
-        if(username == user_name) do
-          _newList = List.delete(state, x)
-        end
-      end
-
-    {:noreply, new_state}
-  end
-
-  @impl true
-  def handle_cast({:sendTweet, userName, tweet}, state) do
-    # get followersList
-    _followersList =
-      for user <- state do
-        [username, _password, _subscritionList, followersList, _usersTweets, _feedList] = user
-
-        if(username == userName) do
-          followersList
-        end
-      end
-
-    # for every follower use :getTweet in genserver
-
-    # for testing
-    followersList = ["child1", "child2", "child3", "child4", "child5", "child6"]
-
-    Enum.each(followersList, fn follower ->
-      # send tweet message
-      GenServer.cast(:"#{follower}", {:getTweet, userName, tweet})
-    end)
-
-    # save tweet to engine
-    new_state =
-      for user <- state do
-        [username, password, subscritionList, followersList, usersTweets, feedList] = user
-
-        if(username == userName) do
-          newusersTweets = usersTweets ++ [{tweet, username}]
-          _x = [username, password, subscritionList, followersList, newusersTweets, feedList]
-        else
-          [username, password, subscritionList, followersList, usersTweets, feedList]
-        end
-      end
-
-    {:noreply, new_state}
-  end
-
-  @impl true
-  def handle_cast({:getTweet, tweeter, tweet, user_name}, state) do
-    # IO.inspect(tweet, label: "got something ")
-
-    new_state =
-      for user <- state do
-        [username, password, subscritionList, followersList, usersTweets, feedList] = user
-
-        if(username == user_name) do
-          newfeedList = feedList ++ [{tweet, tweeter}]
-          _x = [username, password, subscritionList, followersList, usersTweets, newfeedList]
-        else
-          [username, password, subscritionList, followersList, usersTweets, feedList]
-        end
-      end
-
-    {:noreply, new_state}
-  end
-
-  @impl true
-  def handle_cast({:findHashtag, query}, state) do
-    # for every value in the feedlist, search the tweet than search the username
-    # if something interesting is found append it to results
-
-    results = []
-
-    results =
-      for x <- state do
-        [_username, _password, _subscritionList, _followersList, usersTweets, _feedList] = x
-
-        for tweeter <- usersTweets do
-          {tweet, username} = tweeter
-
-          if(String.contains?(tweet, query) == true) do
-            # IO.inspect(usersTweets, label: "Found In Engine")
-            _results = results ++ {tweet, username}
-          end
-        end
-      end
-
-    results = Enum.filter(results, fn x -> x != [nil] end)
-
-    if(results == [[nil, nil]]) do
-      IO.puts("No results found")
-    else
-      IO.inspect(results, label: "found query in engine")
+    if followers != [] do
+      # IO.puts("Im distributing tweets")
+      Tweet.distribute_it(tweet, followers)
     end
 
-    results
-    {:noreply, state}
+    {:reply, tweets, {followers, subscribed, feed, tweets}}
   end
 
-  @impl true
-  def handle_cast({:findPerson, query}, state) do
-    # for every value in the feedlist, search the tweet than search the username
-    # if something interesting is found append it to results
+  def handle_call({:get_my_tweets}, _from, {followers, subscribed, feed, tweets}) do
+    tweets
 
-    results = []
-
-    results =
-      for x <- state do
-        [_username, _password, _subscritionList, _followersList, usersTweets, _feedList] = x
-
-        for tweeter <- usersTweets do
-          {tweet, username} = tweeter
-
-          if(String.contains?(tweet, query) == true) do
-            # IO.inspect(usersTweets, label: "Found In Engine")
-            _results = results ++ [{tweet, username}]
-          end
-        end
-      end
-
-    results = Enum.filter(results, fn x -> x != [nil] end)
-
-    if(results == []) do
-      IO.puts("No results found")
-    else
-      IO.inspect(results, label: "found query in engine")
-    end
-
-    {:noreply, state}
+    {:reply, tweets, {followers, subscribed, feed, tweets}}
   end
 
-  def getUsersTweets(state, userName) do
-    usersTweetsForFeed =
-      for user <- state do
-        [username, _password, _subscritionList, _followersList, usersTweets, _feedList] = user
+  def handle_call({:got_mssg, tweet}, _from, {followers, subscribed, feed, tweets}) do
+    feed = feed ++ [tweet]
+    # pid = self()
+    # IO.puts("My tweets are ")
+    # IO.inspect(tweets)
+    {:reply, feed, {followers, subscribed, feed, tweets}}
+  end
 
-        if(username == userName) do
-          usersTweets
-        end
-      end
+  def handle_call({:populate, follower}, _from, {followers, subscribed, feed, tweets}) do
+    followers = followers ++ [follower]
+    {:reply, {followers, subscribed, feed, tweets}, {followers, subscribed, feed, tweets}}
+  end
 
-    usersTweetsForFeed = Enum.filter(usersTweetsForFeed, fn x -> x != nil end)
-    # IO.inspect(usersTweetsForFeed, label: "usersTweets")
-    usersTweetsForFeed
+  def handle_call(
+        {:subscribed, following, new_tweets},
+        _from,
+        {followers, subscribed, feed, tweets}
+      ) do
+    subscribed = subscribed ++ [following]
+    feed = feed ++ new_tweets
+    {:reply, {followers, subscribed, feed, tweets}, {followers, subscribed, feed, tweets}}
+  end
+
+  def handle_call({:get_feed}, _from, {followers, subscribed, feed, tweets}) do
+    {:reply, feed, {followers, subscribed, feed, tweets}}
+  end
+
+  def handle_call({:get_my_feed, new_feed}, _from, {followers, subscribed, feed, tweets}) do
+    feed = feed ++ new_feed
+    # IO.inspect(feed, label: "The feed now inside looks like")
+    # IO.inspect(tweets, label: "The tweets inside look like")
+    {:reply, {followers, subscribed, feed, tweets}, {followers, subscribed, feed, tweets}}
   end
 end
 
-defmodule User do
-  use GenServer
+defmodule Register do
+  def reg(name, pass) do
+    # start a process with the given name - CSA
+    DySupervisor.start_child(name)
 
-  def start_link(args) do
-    user_name = Enum.at(args, 0)
-    # IO.inspect(user_name, label: "username for new client")
-    {:ok, _pid} = GenServer.start_link(__MODULE__, args, name: :"#{user_name}")
+    # Start the CSSA
+    tweets = []
+    followers = []
+    subscribed = []
+    feed = []
+    Engine.start_link([followers, subscribed, feed, tweets, name])
+
+    # Get the name on subscribed list  lst
+    # Get password name key word pair list in place of followers
+    pid = :"#{Engine}_cssa"
+    {new_key_pass, new_subscribed, _, _} = GenServer.call(pid, {:register, name, pass})
+    # IO.inspect(new_key_pass, label: "The key pass list is")
+    # IO.inspect(new_subscribed, label: "The people's list is")
   end
 
-  @impl true
-  def init(args) do
-    {:ok, args}
+  def makeKids(num, pass) when num > 1 do
+    # start a child
+    numm = Integer.to_string(num)
+    username = String.replace_suffix("child x", " x", numm)
+    reg(username, "pwd")
+    newNum = num - 1
+    makeKids(newNum, "pwd")
   end
 
-  @impl true
-  def handle_cast({:updateState, new_state}, _state) do
-    IO.inspect(new_state, label: "in update user state")
+  def makeKids(num, pass) do
+    # start a child
+    numm = Integer.to_string(num)
+    username = String.replace_suffix("child x", " x", numm)
+    reg(username, "pwd")
+  end
+end
 
-    {:noreply, new_state}
+defmodule Subscribe do
+  def subscribe(from, to) do
+    # Populate people's list (PLUG)
+    # IO.puts("Lets start subscribin !")
+    pid_from = :"#{from}_cssa"
+    pid_to = :"#{to}_cssa"
+
+    # Put your name in the followers list of the person followed
+    {new_followers, _, _, new_tweets} = GenServer.call(pid_to, {:populate, pid_from})
+
+    IO.inspect(new_followers,
+      label: "The followers in the person you subscribed to has your name !"
+    )
+
+    # Put their name in your subscribed list
+    {_, new_subscribed, _, _} = GenServer.call(pid_from, {:subscribed, pid_to, new_tweets})
+    IO.inspect(new_subscribed, label: "you have subscribed to #{to}")
   end
 
-  # @impl true
-  # def handle_cast({:addFollower, follower, _followee}, state) do
-  #   username = Enum.at(state, 0)
-  #   password = Enum.at(state, 1)
-  #   subscritionList = Enum.at(state, 2)
-  #   followersList = Enum.at(state, 3)
-  #   tweetsList = Enum.at(state, 4)
-  #
-  #   newFollowersList = followersList ++ [follower]
-  #   newState = [username, password, subscritionList, newFollowersList, tweetsList]
-  #   IO.inspect(newState, label: "in addFollower user state")
-  #   {:noreply, newState}
-  # end
+  def subscribeMany(num_user) do
+    # for every user
+    pid = :"#{Engine}_cssa"
+    all_users = GenServer.call(pid, {:getAllUsers})
 
-  @impl true
-  def handle_cast({:goToClient}, state) do
-    # showMainMenu(state)
-    state
-    {:noreply, state}
-  end
-
-  @impl true
-  def handle_cast({:getTweet, tweeter, tweet}, state) do
-    username = Enum.at(state, 0)
-    # IO.inspect(username, label: "User got tweet")
-    GenServer.cast(Engine, {:getTweet, tweeter, tweet, username})
-    {:noreply, state}
-  end
-
-  def showMainMenu(state) do
-    showEngine()
-
-    action =
-      Mix.Shell.IO.prompt(
-        "Would you like to:\n Delete account\n Send tweet\n Subscribe to user\n Re-tweet\n Query\n Check Feed\n"
-      )
-
-    case action do
-      "D\n" ->
-        deleteUser(state)
-
-      "d\n" ->
-        deleteUser(state)
-
-      "Delete\n" ->
-        deleteUser(state)
-
-      "delete\n" ->
-        deleteUser(state)
-
-      ###########################
-      "sub\n" ->
-        subscribeToUser(state)
-        showMainMenu(state)
-
-      "Subscribe\n" ->
-        subscribeToUser(state)
-        showMainMenu(state)
-
-      "subscribe\n" ->
-        subscribeToUser(state)
-        showMainMenu(state)
-
-      ###########################
-      "SendTweet\n" ->
-        tweet(state)
-        showMainMenu(state)
-
-      "Tweet\n" ->
-        tweet(state)
-        showMainMenu(state)
-
-      "sendTweet\n" ->
-        tweet(state)
-        showMainMenu(state)
-
-      "tweet\n" ->
-        tweet(state)
-        showMainMenu(state)
-
-      "send tweet\n" ->
-        tweet(state)
-        showMainMenu(state)
-
-      ###########################
-
-      "check feed\n" ->
-        feed(state)
-        showMainMenu(state)
-
-      "c\n" ->
-        feed(state)
-        showMainMenu(state)
-
-      ###########################
-      "q\n" ->
-        query(state)
-        showMainMenu(state)
-
-      "query\n" ->
-        query(state)
-        showMainMenu(state)
-
-      ###########################
-      "r\n" ->
-        retweet(state)
-        showMainMenu(state)
-
-      "retweet\n" ->
-        retweet(state)
-        showMainMenu(state)
-
-      _ ->
-        showMainMenu(state)
+    for user <- all_users do
+      # pick a random number of people to subscribe too
+      numToSub = Enum.random(1..num_user)
+      subRandom(user, numToSub, num_user)
     end
   end
 
-  def deleteUser(state) do
+  def subRandom(user, numOfSub, num_user) when numOfSub > 1 do
+    # pick a random person to subscribe to
+    pid = :"#{Engine}_cssa"
+    all_users = GenServer.call(pid, {:getAllUsers})
+    num_end = num_user - 1
+    numToSub = Enum.random(0..num_end)
+    subs = Enum.at(all_users, numToSub)
+    # IO.puts("#{user} pick #{numToSub} from the hat wants to subscribe to #{subs}")
+
+    # TO DO: Add check to see if you already are subscribed
+    if user != subs do
+      pid_sender2 = :"#{user}"
+      GenServer.call(pid_sender2, {:subscribe, subs})
+    end
+
+    # pid_sender = :"#{user}"
+    # GenServer.call(pid_sender, {:subscribe, subs})
+
+    numOfSub = numOfSub - 1
+    subRandom(user, numOfSub, num_user)
+  end
+
+  def subRandom(user, numOfSub, num_user) do
+    pid = :"#{Engine}_cssa"
+    all_users = GenServer.call(pid, {:getAllUsers})
+    num_end = num_user - 1
+    numToSub = Enum.random(0..num_end)
+    subs = Enum.at(all_users, numToSub)
+    # IO.puts("#{user} pick #{numToSub} from the hat wants to subscribe to #{subs}")
+    # TO DO: Add check to see if you already are subscribed
+    if user != subs do
+      pid_sender2 = :"#{user}"
+      GenServer.call(pid_sender2, {:subscribe, subs})
+    end
+  end
+end
+
+defmodule Retweet do
+  def retweet(my_id) do
+    id = :"#{my_id}_cssa"
+    {_, _, my_feed, _} = :sys.get_state(id)
+    # convert the list to a keyword list
+    _c = 0
+    _lst = []
+
+    {_, my_new_feed} =
+      Enum.reduce(my_feed, {0, []}, fn x, {c, lst} ->
+        c = c + 1
+        lst = lst ++ [{:"#{c}", x}]
+        {c, lst}
+      end)
+
+    IO.inspect(my_new_feed, label: "Your feed")
+    # re_tweet = String.trim(IO.gets("Select a tweet from your list of tweets \n"))
+    re_tweet = 1
+    select = :"#{re_tweet}"
+    # Not checked if this works
+    IO.inspect(select, label: "You Selected #{select}")
+    tweet = List.keyfind(my_new_feed, select, 0)
+
+    if tweet != nil do
+      tweet = elem(tweet, 1)
+      newTweet = "#I am retweeting: tweet #{tweet}"
+      IO.inspect(tweet, label: "You Selected this tweet")
+      GenServer.call(id, {:tweet, newTweet})
+    else
+      IO.puts("can't find the tweet you want to retweet")
+    end
+  end
+end
+
+defmodule Tweet do
+  def send_tweet(sender, tweet) do
+    # Tell the process of sender about the tweet
+    pid_sender = :"#{sender}_cssa"
+    tweetLength = String.length(tweet)
+
+    if(tweetLength > 280) do
+      overby = tweetLength - 280
+      IO.puts("Tweet is too long by #{overby} characters please try again. ")
+      :TweetToLong
+    else
+      if(tweetLength == 0 || tweet == " ") do
+        IO.puts("You cannot tweet an empty string")
+        :EmptyTweet
+      else
+        new_tweets = GenServer.call(pid_sender, {:tweet, tweet})
+        IO.inspect(new_tweets, label: "#{sender} has tweeted")
+        new_tweets
+      end
+    end
+  end
+
+  def distribute_it(tweet, people) do
+    # Tell the engine to distribute the tweet
+    # pid = :"#{Engine}_cssa"
+    # :ok = GenServer.call(pid, {:distribute, tweet, people})
+    for elem <- people do
+      pid = :"#{elem}"
+      feed = GenServer.call(pid, {:got_mssg, tweet})
+      IO.inspect(feed, label: "My #{elem} news feeds after getting the tweet")
+    end
+  end
+
+  def sendManyTweets(num, tweets_db) do
+    # for every user
+    pid = :"#{Engine}_cssa"
+    all_users = GenServer.call(pid, {:getAllUsers})
+
+    for user <- all_users do
+      # send num amount of tweets
+      simtweet(user, num, tweets_db)
+    end
+  end
+
+  def simtweet(user, num, tweets_db) when num > 1 do
+    # IO.puts("#{user} sending tweet")
+    pid_user = :"#{user}"
+    # from tweets_db
+    numOfTweetsInDb = length(tweets_db)
+
+    if num < numOfTweetsInDb do
+      tweet = Enum.at(tweets_db, num)
+      Tweet.send_tweet(pid_user, tweet)
+      # GenServer.call(pid_user, {:tweet, tweet})
+    else
+      mod = Integer.mod(num, numOfTweetsInDb)
+      tweet = Enum.at(tweets_db, mod)
+      Tweet.send_tweet(pid_user, tweet)
+      # GenServer.call(pid_user, {:tweet, tweet})
+    end
+
+    num = num - 1
+    simtweet(user, num, tweets_db)
+  end
+
+  def simtweet(user, num, tweets_db) do
+    # IO.puts("#{user} sending tweet")
+    pid_user = :"#{user}"
+    # from tweets_db
+    numOfTweetsInDb = length(tweets_db)
+
+    if num < numOfTweetsInDb do
+      tweet = Enum.at(tweets_db, num)
+      GenServer.call(pid_user, {:tweet, tweet})
+    else
+      mod = Integer.mod(num, numOfTweetsInDb)
+      tweet = Enum.at(tweets_db, mod)
+      GenServer.call(pid_user, {:tweet, tweet})
+    end
+  end
+end
+
+defmodule Query do
+  def get_my_results(query, my_id) do
+    queryLength = String.length(query)
+
+    if(queryLength == 0 || query == " ") do
+      IO.puts("You cannot query an empty string")
+      :EmptyQuery
+    else
+      id = :"#{my_id}_cssa"
+      feedList = GenServer.call(id, {:get_feed})
+      IO.inspect(feedList, label: "feedList")
+
+      # # for every value in the feedlist, search the tweet than search the username
+      # # if something interesting is found append it to results
+      #
+      results = []
+
+      results =
+        for tweet <- feedList do
+          _r =
+            if(String.contains?(tweet, query) == true) do
+              IO.inspect(tweet, label: "Found")
+              _results = results ++ tweet
+            end
+        end
+
+      results = List.flatten(Enum.filter(results, fn x -> x != nil end))
+    end
+  end
+
+  def get_my_feed(my_id) do
+    # Get the list of subscribers
+    id = :"#{my_id}_cssa"
+    {_, my_subscribed, _, _} = :sys.get_state(id)
+    # Get each Subscribers tweets list and add it to my feed list
+    IO.inspect(my_subscribed, label: "These are the list of people i subscribed")
+
+    for elem <- my_subscribed do
+      # IO.inspect(elem, label: "Just checking if elem has _cssa in it")
+      d_tweets = []
+      # elem = :"#{elem}_cssa"
+      {_, _, _, d_tweets} = :sys.get_state(elem)
+      IO.inspect(d_tweets, label: "The tweets from #{elem}")
+      {_, _, d_feed, _} = GenServer.call(id, {:get_my_feed, d_tweets})
+      IO.inspect(d_feed, label: "Now my tweets have the feed of #{elem}")
+    end
+  end
+
+  def get_hashtags(hashtag, my_id) do
+    pid = :"#{Engine}_cssa"
+    id = :"#{my_id}_cssa"
+
+    {_, people, _, _} = :sys.get_state(pid)
+    people = people -- [my_id]
+    IO.inspect(people, label: "Total number of people who could have used this hashtag")
+    # CHECK if elem is _cssa address
+
+    for elem <- people do
+      # get their tweets
+      elem = :"#{elem}_cssa"
+      {_, _, _, sent_tweets} = :sys.get_state(elem)
+      IO.inspect(sent_tweets)
+      # check their tweets and collect their hashtags
+      list_of_tweets =
+        Enum.reduce(sent_tweets, [], fn x, lst ->
+          if String.contains?(x, hashtag) do
+            lst = lst ++ [x]
+          else
+            lst = lst
+          end
+        end)
+
+      IO.inspect(list_of_tweets, label: "The list of tweets that have the hashtag")
+      # Get these hashtags in your feed using get_my_feed handle call
+      if list_of_tweets != [] do
+        IO.puts("Putting the hashtags in your feed")
+        {_, _, _, d_feed} = GenServer.call(id, {:get_my_feed, list_of_tweets})
+      end
+    end
+  end
+
+  def get_mentions(mention, my_id) do
+    pid = :"#{Engine}_cssa"
+    id = :"#{my_id}_cssa"
+    {_, people, _, _} = :sys.get_state(pid)
+    people = people -- [id]
+
+    for elem <- people do
+      # get their tweets
+      elem = :"#{elem}_cssa"
+      {_, _, _, sent_tweets} = :sys.get_state(elem)
+      # check their tweets and collect their hashtags
+      list_of_tweets =
+        Enum.reduce(sent_tweets, [], fn x, lst ->
+          if String.contains?(x, mention) do
+            lst = lst ++ [x]
+          else
+            lst = lst
+          end
+        end)
+
+      # Get these hashtags in your feed using get_my_feed handle call
+      {_, _, _, d_feed} = GenServer.call(id, {:get_my_feed, list_of_tweets})
+    end
+  end
+end
+
+defmodule Feed do
+  def showfeed(sender) do
+    id = :"#{sender}_cssa"
+    user_feed = GenServer.call(id, {:get_feed})
+    IO.inspect(user_feed, label: "Your feed is ")
+  end
+end
+
+defmodule Delete do
+  def deleteUser(id) do
     # IO.inspect(state, label: "State")
-    answer = Mix.Shell.IO.prompt("Are you sure you would like to delete your account?")
+    # answer = Mix.Shell.IO.prompt("Are you sure you would like to delete your account?")
+    answer = String.trim(IO.gets("Are you sure you would like to delete your account?"))
 
     case answer do
-      "Yes\n" ->
+      "Yes" ->
         # if checkPassword passes
-        _userName = Enum.at(state, 0)
-        password = Enum.at(state, 1)
-        enteredpassword1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
-        enteredpassword = String.trim(enteredpassword1)
+        userName = id
+        # password = Enum.at(state, 1)
+        # enteredpassword1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
+        # enteredpassword = String.trim(enteredpassword1)
 
-        if password == enteredpassword do
-          deleteConfirm(state)
-        else
-          IO.puts("Incorrect password")
-        end
+        # if password == enteredpassword do
+        deleteConfirm(userName)
 
-      "yes\n" ->
+      # else
+      #   IO.puts("Incorrect password")
+      # end
+
+      "yes" ->
         # if checkPassword passes
-        _userName = Enum.at(state, 0)
-        password = Enum.at(state, 1)
-        enteredpassword1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
-        enteredpassword = String.trim(enteredpassword1)
+        userName = id
+        # password = Enum.at(state, 1)
+        # enteredpassword1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
+        # enteredpassword = String.trim(enteredpassword1)
 
-        if password == enteredpassword do
-          deleteConfirm(state)
-        else
-          IO.puts("Incorrect password")
-          deleteUser(state)
-        end
+        # if password == enteredpassword do
+        deleteConfirm(userName)
 
-      "No\n" ->
-        showMainMenu(state)
+        # else
+        #   IO.puts("Incorrect password")
+        # end
 
-      "no\n" ->
-        showMainMenu(state)
+        # "No\n" ->
+        #   showMainMenu(state)
+        #
+        # "no\n" ->
+        #   showMainMenu(state)
     end
   end
 
-  def deleteConfirm(state) do
-    confirm = Mix.Shell.IO.prompt("Final confirmation. Delete Account?")
+  def deleteConfirm(id) do
+    # confirm = Mix.Shell.IO.prompt("Final confirmation. Delete Account?")
+    confirm = String.trim(IO.gets("Are you sure you would like to delete your account?"))
 
     case confirm do
-      "Yes\n" ->
+      "Yes" ->
         # delete from supervisor and log out
         # deleteFromSupervisor(state)
-        deleteFromEngine(state)
+        remAsfollower(id)
+        remFromEngine(id)
+        deleteFromCSA(id)
+        deleteFromCSSA(id)
 
-      "yes\n" ->
+      "yes" ->
         # deleteFromSupervisor(state)
-        deleteFromEngine(state)
+        remAsfollower(id)
+        remFromEngine(id)
+        deleteFromCSA(id)
+        deleteFromCSSA(id)
 
-      "No\n" ->
-        showMainMenu(state)
-
-      "no\n" ->
-        showMainMenu(state)
+        # "No\n" ->
+        #   showMainMenu(state)
+        #
+        # "no\n" ->
+        #   showMainMenu(state)
     end
   end
 
-  def deleteFromSupervisor(state) do
+  def deleteFromCSA(id) do
     dpid = Process.whereis(DySupervisor)
-    # val = Process.alive?(dpid)
-    userName = Enum.at(state, 0)
-    pid = GenServer.whereis(:"#{userName}")
+    # # val = Process.alive?(dpid)
+    # userName = Enum.at(state, 0)
+    pid = GenServer.whereis(id)
     IO.inspect(pid, label: "deleting child")
     DynamicSupervisor.terminate_child(dpid, pid)
     IO.puts("Account Deleted From Supervisor.")
   end
 
-  def deleteFromEngine(state) do
-    # find account in engine
-    GenServer.cast(Engine, {:removeUser, state})
-    IO.puts("Account Deleted From Engine.")
-  end
+  def deleteFromCSSA(id) do
+    id = :"#{id}_cssa"
+    Process.register(self(), :test)
+    mpid = Process.whereis(:test)
+    IO.inspect(mpid, label: "I am ")
+    pid = GenServer.whereis(id)
+    IO.inspect(pid, label: "Going to kill the CSSA ")
+    send(pid, :kill_me_pls)
+    bool_al = Process.alive?(pid)
+    IO.inspect(bool_al, label: "Is process alive")
 
-  def subscribeToUser(state) do
-    newUserToSubscribeTo1 = Mix.Shell.IO.prompt("Who do you want to subscribe to?")
-    newUserToSubscribeTo = String.trim(newUserToSubscribeTo1)
-    username = Enum.at(state, 0)
-
-    usernameLists = GenServer.call(Engine, {:getUsers})
-
-    if newUserToSubscribeTo in usernameLists do
-      subscritionList = GenServer.call(Engine, {:getSubscribers, username})
-
-      if newUserToSubscribeTo in subscritionList do
-        IO.puts("You are already subscribed to this user")
-      else
-        if newUserToSubscribeTo != username do
-          GenServer.cast(Engine, {:addFollower, username, newUserToSubscribeTo})
-          GenServer.cast(Engine, {:addToSubscribeList, username, newUserToSubscribeTo})
-          GenServer.cast(Engine, {:addSubToFeed, username, newUserToSubscribeTo})
-          IO.puts("You are now subscribed to #{newUserToSubscribeTo}")
-        else
-          IO.puts("You cannot subscribe to yourself")
-        end
-      end
+    if bool_al do
+      IO.puts("Still alive")
     else
-      IO.puts("There is no such user")
+      IO.puts("Process deleted from CSSA")
     end
   end
 
-  def tweet(state) do
-    username = Enum.at(state, 0)
-    _password = Enum.at(state, 1)
+  def remAsfollower(id) do
+    id = :"#{id}_cssa"
+    {_, my_subscribed, _, _} = :sys.get_state(id)
 
-    tweet1 = Mix.Shell.IO.prompt("What would you like to tweet?")
-    tweet = String.trim(tweet1)
-
-    GenServer.cast(Engine, {:sendTweet, username, tweet})
-    IO.inspect(tweet, label: "You tweeted")
-
-    # newTweetsList = tweetsList ++ [tweet]
-    # _newState = [username, password, subscritionList, followersList, newTweetsList]
-  end
-
-  def feed(state) do
-    userName = Enum.at(state, 0)
-    feedList = GenServer.call(Engine, {:getFeedList, userName})
-    # IO.inspect(feedList, label: "Your feed")
-  end
-
-  def retweet(state) do
-    userName = Enum.at(state, 0)
-    feedList = GenServer.call(Engine, {:getFeedList, userName})
-    indexedFeedList = Enum.with_index(feedList)
-    numberedFeedList = []
-
-    numberedFeedList =
-      for x <- indexedFeedList do
-        {tweet, index} = x
-        _numberedFeedList = numberedFeedList ++ [index, tweet]
-      end
-
-    IO.inspect(numberedFeedList, label: "Your feed")
-
-    index1 =
-      Mix.Shell.IO.prompt("Which tweet would you like to retweet? (Please write index only)")
-
-    index = String.to_integer(String.trim(index1))
-    [_index, {tweetToReTweet, _user_nameToReTweet}] = Enum.at(numberedFeedList, index)
-
-    confirm1 = Mix.Shell.IO.prompt("You selected #{tweetToReTweet} is this correct?")
-    confirm = String.trim(confirm1)
-
-    if confirm == "yes" || confirm == "Yes" do
-      addedToTweet1 = Mix.Shell.IO.prompt("What would you like to add to the tweet?")
-      addedToTweet = String.trim(addedToTweet1)
-      newTweet = "#{addedToTweet} : respond to tweet #{tweetToReTweet}"
-      # IO.inspect(newTweet, label: "new Tweet")
-
-      username = Enum.at(state, 0)
-      GenServer.cast(Engine, {:sendTweet, username, newTweet})
-      IO.inspect(newTweet, label: "You tweeted")
-    else
-      showMainMenu(state)
+    for elem <- my_subscribed do
+      # elem = :"#{elem}_cssa"
+      followers = GenServer.call(elem, {:Remove_me, id})
+      IO.inspect(followers, label: "My #{elem} followers list")
     end
   end
 
-  def query(state) do
-    IO.inspect(state, label: "genserver state in query")
-    userName = Enum.at(state, 0)
-    query1 = Mix.Shell.IO.prompt("What would you like to search?")
-    query = String.trim(query1)
-
-    # person
-    results =
-      r_person =
-      if String.contains?(query, "@") do
-        # go to engine
-        {_at, name} = String.split_at(query, 1)
-        GenServer.cast(Engine, {:findPerson, name})
-      else
-        # hashtag
-        r_hashtag =
-          if String.contains?(query, "#") do
-            # go to engine
-            hashtag_results = GenServer.cast(Engine, {:findHashtag, query})
-            IO.inspect(hashtag_results, label: "hashtag_results")
-            # normal search
-          else
-            feedList = GenServer.call(Engine, {:getFeedList, userName})
-            IO.inspect(feedList, label: "feedList")
-
-            # for every value in the feedlist, search the tweet than search the username
-            # if something interesting is found append it to results
-
-            results = []
-
-            results =
-              for x <- feedList do
-                {tweet, username} = x
-
-                _r =
-                  if(String.contains?(tweet, query) == true) do
-                    IO.inspect(tweet, label: "Found")
-                    _results = results ++ [{tweet, username}]
-                  else
-                    if(String.contains?(username, query) == true) do
-                      IO.inspect(username, label: "Found")
-                      _results = results ++ [{tweet, username}]
-                    end
-                  end
-              end
-
-            IO.inspect(results, label: "found query")
-          end
-      end
-  end
-
-  def showEngine() do
-    epid = Process.whereis(Engine)
-    IO.inspect(epid, label: "engine pid")
-    state = :sys.get_state(epid)
-    IO.inspect(state, label: "Engine")
+  def remFromEngine(id) do
+    pid = :"#{Engine}_cssa"
+    # id = :"#{id}_cssa"
+    {new_key_pass, new_subscribed, _, _} = GenServer.call(pid, {:Unregister, id})
+    IO.inspect(new_key_pass, label: "Engine's key_pass list")
+    IO.inspect(new_subscribed, label: "Engine's subscribed after deleting ")
   end
 end
 
-defmodule PROJ4 do
-  use Application
-
-  def start(_type, _args) do
-    # supervisor for client
-    {:ok, _pid} = DySupervisor.start_link(1)
-
-    # # supervisor for engine
-    {:ok, _pid} = EngineSupervisor.start_link(1)
-    EngineSupervisor.start_child([])
-
-    # enterTwitter()
-
-    Supervisor.start_link([], strategy: :one_for_one)
+# Main
+defmodule Main do
+  def main_task do
+    # Start the supervisor \
+    DySupervisor.start_link(1)
+    # Start the engine \
+    tweets = []
+    followers = []
+    subscribed = []
+    feed = []
+    {:ok, pid} = Engine.start_link([followers, subscribed, feed, tweets, Engine])
   end
 
-  def enterTwitter() do
-    # ask for login or register
-    action = Mix.Shell.IO.prompt("Log In or Register?")
+  def main(arguments) do
+    # Make them into integers
+    num_user = String.to_integer(Enum.at(arguments, 0))
+    # num_user = 3
+    num_msg = String.to_integer(Enum.at(arguments, 1))
+    # num_msg = 4
+    runSimulation(num_user, num_msg)
 
-    case action do
-      "Register\n" ->
-        registerUserName()
-
-      "register\n" ->
-        registerUserName()
-
-      "Log In\n" ->
-        loginUserGetUserName()
-
-      "LogIn\n" ->
-        loginUserGetUserName()
-
-      "log In\n" ->
-        loginUserGetUserName()
-
-      "logIn\n" ->
-        loginUserGetUserName()
-
-      "log in\n" ->
-        loginUserGetUserName()
-
-      "login\n" ->
-        loginUserGetUserName()
-
-      "test\n" ->
-        test()
-
-      _ ->
-        enterTwitter()
-    end
-
-    # :showLogIn
-    # :registered
+    # task = String.trim(IO.gets("Want to Register or Login? \n"))
+    #
+    # if task == "Register" do
+    #   {_, tot_users, _, _} = :sys.get_state(:"#{Engine}_cssa")
+    #   action = String.trim(IO.gets("Your name ? \n"))
+    #
+    #   if action in tot_users do
+    #     IO.puts("username already exists")
+    #   else
+    #     pass = String.trim(IO.gets("Your password? \n"))
+    #     Register.reg(action, pass)
+    #   end
+    # end
+    #
+    # if task == "Login" do
+    #   {pass_users, tot_users, _, _} = :sys.get_state(:"#{Engine}_cssa")
+    #   IO.inspect(tot_users, label: "Total users list in Login")
+    #   sender = String.trim(IO.gets("Your username is ? \n"))
+    #
+    #   if sender in tot_users do
+    #     # After checking show
+    #     pass = String.trim(IO.gets("And your password ? \n"))
+    #     pid_sender = :"#{sender}"
+    #     {_, pass2} = List.keyfind(pass_users, pid_sender, 0)
+    #
+    #     if pass2 == pass do
+    #       IO.puts("Welcome!")
+    #
+    #       job =
+    #         String.trim(
+    #           IO.gets(
+    #             "What wouid you like to do - Tweet,Delete,Subscribe,Retweet,Feed or Query? \n"
+    #           )
+    #         )
+    #
+    #       # Need more jobs to do
+    #       if job == "Tweet" do
+    #         # TODO _Add next line argument
+    #         tweet = String.trim(IO.gets("What's on your mind? \n"))
+    #         GenServer.call(pid_sender, {:tweet, tweet})
+    #       end
+    #
+    #       if job == "Subscribe" do
+    #         tot_users = tot_users -- [sender]
+    #         IO.inspect(tot_users, label: "People you can subscribe")
+    #         subs = String.trim(IO.gets("Who do you want to subscribe to? \n"))
+    #         # CHeck if subs exist in system
+    #         if subs in tot_users do
+    #           GenServer.call(pid_sender, {:subscribe, subs})
+    #         else
+    #           IO.puts("Person you are trying to subscribe doesn't exist")
+    #         end
+    #       end
+    #
+    #       if job == "Retweet" do
+    #         Retweet.retweet(pid_sender)
+    #       end
+    #
+    #       if job == "Delete" do
+    #         Delete.deleteUser(pid_sender)
+    #       end
+    #
+    #       if job == "Query" do
+    #         query =
+    #           String.trim(IO.gets("What is your query:  Tweets , @mentions or #hashtags? \n"))
+    #
+    #         if query == "Tweets" do
+    #           Query.get_my_results(pid_sender)
+    #         end
+    #
+    #         if query == "#hashtags" do
+    #           hashtag = String.trim(IO.gets("Which trend are you looking for? \n"))
+    #           GenServer.call(pid_sender, {:hashtag, hashtag})
+    #         end
+    #
+    #         if query == "@mentions" do
+    #           mention = String.trim(IO.gets("Whose mention are you looking for? \n"))
+    #           GenServer.call(pid_sender, {:mention, mention})
+    #         end
+    #       end
+    #
+    #       if job == "Feed" do
+    #         Feed.showfeed(pid_sender)
+    #       end
+    #     else
+    #       IO.puts("Wrong password")
+    #     end
+    #   else
+    #     IO.puts("Wrong username")
+    #   end
+    # end
+    #
+    # main()
   end
 
-  def registerUserName() do
-    user_name = Mix.Shell.IO.prompt("Please Create A UserName:")
-    userName = String.trim(user_name)
-    registerPassword(userName)
-    # :registerComplete
+  def runSimulation(num_user, num_msg) do
+    # get number of users --> makeKids(numUsers)
+    Register.makeKids(num_user, "pwd")
+    # get number of fake tweets --> makeFakeTweets(numTweets)
+    testTweets_db = []
+    testTweets = makeFakeTweets(num_msg, testTweets_db)
+    # subscribe
+    Subscribe.subscribeMany(num_user)
+    # IO.inspect(testTweets, label: "test Tweets")
+    Tweet.sendManyTweets(num_msg, testTweets)
+
+    # sends that many tweets per user
+    # re-tweet
+    # query
+    # feed
   end
 
-  def registerPassword(user_name) do
-    password1 = Mix.Shell.IO.prompt("Please Create A Password:")
-    password2 = Mix.Shell.IO.prompt("Please Repeat Password For Verification:")
-
-    if(password1 == password2) do
-      # start dynamic supervisor
-      password = String.trim(password1)
-
-      # check if username already taken
-      usernameLists = GenServer.call(Engine, {:getUsers})
-
-      if user_name in usernameLists do
-        IO.puts("Username already taken please try again")
-        :registerFailed
-        # registerPassword(user_name)
-      else
-        # start a child
-        DySupervisor.start_child(user_name, password)
-        GenServer.cast(Engine, {:addUser, [user_name, password]})
-
-        IO.puts("Your new username is #{user_name} and your account was created")
-        IO.puts("Please Log In For First Time")
-        # :goToLogin
-        # loginUser()
-      end
-    else
-      IO.puts("Passwords did not match please try again")
-      # :registerFailed
-      registerPassword(user_name)
-    end
-
-    # check that child is in DySupervisor
-    children = DynamicSupervisor.which_children(DySupervisor)
-
-    _state =
-      for x <- children do
-        {_, pidx, _, _} = x
-        _state = :sys.get_state(pidx)
-      end
-  end
-
-  def loginUserGetUserName() do
-    user_name = Mix.Shell.IO.prompt("Please Enter Your UserName:")
-    userName = String.trim(user_name)
-    loginUserGetPassWord(userName)
-  end
-
-  def loginUserGetPassWord(userName) do
-    password1 = Mix.Shell.IO.prompt("Please Enter Your Password:")
-    password = String.trim(password1)
-
-    # check that username exists
-    kids = getChildren()
-
-    usernameLists = Enum.flat_map(kids, fn [user_name, _x] -> [user_name] end)
-
-    val =
-      if userName in usernameLists do
-        if checkPassword(userName, password) == true do
-          :correctLogIn
-          # goToClient(userName)
-        else
-          IO.inspect(userName, label: "1 Incorrect username or password. Please try again.")
-          :incorrectLogIn
-          # loginUser()
-        end
-      else
-        IO.inspect(userName, label: "2 Incorrect username or password. Please try again.")
-        :incorrectLogIn
-        # loginUser()
-      end
-  end
-
-  def checkPassword(user_name, password) do
-    # check that username exists
-    kids = getChildren()
-    # IO.inspect(kids, label: "kids")
-
-    # check if password is okay
-    if(Enum.member?(kids, [user_name, password])) do
-      true
-    else
-      # incorrect password
-      false
-    end
-  end
-
-  def goToClient(userName) do
-    # IO.inspect(userName, label: "in goToClient")
-    GenServer.cast(:"#{userName}", {:goToClient})
-  end
-
-  def getChildren() do
-    # get children from Supervisor to see if it registered
-    children = DynamicSupervisor.which_children(DySupervisor)
-
-    for x <- children do
-      {_, pidx, _, _} = x
-      _state = :sys.get_state(pidx)
-      # IO.inspect(state, label: "Child")
-    end
-  end
-
-  def test() do
-    # make a bunch of kids
-    makeKids(6)
-
-    # register a specific user
-    DySupervisor.start_child("testUser", "t")
-    GenServer.cast(Engine, {:addUser, ["testUser", "t"]})
-
-    # make sure they are all there
-    kids = PROJ4.getChildren()
-    IO.inspect(kids)
-
-    # goToClient
-    goToClient("testUser")
-  end
-
-  def makeKids(num) when num > 1 do
-    # IO.puts("making kids")
-
-    # start a child
+  def makeFakeTweets(num, testTweets_db) when num > 1 do
     numm = Integer.to_string(num)
-    username = String.replace_suffix("child x", " x", numm)
-    DySupervisor.start_child(username, "asd")
-
-    GenServer.cast(Engine, {:addUser, [username, "asd"]})
+    numtweet = String.replace_suffix("tweet x", " x", numm)
+    testTweet = "Test #{numtweet}"
+    testTweets_db = testTweets_db ++ [testTweet]
     newNum = num - 1
-    makeKids(newNum)
+    makeFakeTweets(newNum, testTweets_db)
   end
 
-  def makeKids(num) do
-    # IO.puts("made kids")
-
-    # start a child
+  def makeFakeTweets(num, testTweets_db) do
     numm = Integer.to_string(num)
-    username = String.replace_suffix("child x", " x", numm)
-
-    DySupervisor.start_child(username, "asd")
-    GenServer.cast(Engine, {:addUser, [username, "asd"]})
+    numtweet = String.replace_suffix("tweet x", " x", numm)
+    testTweet = "Test #{numtweet}"
+    _testTweets_db = testTweets_db ++ [testTweet]
   end
 end
+
+# Take command line arguments
+arguments = System.argv()
+
+Main.main_task()
+Main.main(arguments)

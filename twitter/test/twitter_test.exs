@@ -83,7 +83,11 @@ defmodule TWITTERTest do
       new_tweets = Retweet.retweet(pid_sender)
       # assert that it is in her tweet's list
       assert new_tweets == [
+               "tweet3",
+               "tweet2",
                "tweet1",
+               "tweet3",
+               "tweet2",
                "#I am retweeting: tweet test tweet for #testing i love puppies"
              ]
     end
@@ -119,7 +123,11 @@ defmodule TWITTERTest do
       IO.inspect(user3_feed, label: "user3 feed is")
 
       assert user3_feed == [
+               "tweet3",
+               "tweet2",
                "tweet1",
+               "tweet3",
+               "tweet2",
                "#I am retweeting: tweet test tweet for #testing i love puppies"
              ]
     end

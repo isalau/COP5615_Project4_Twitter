@@ -298,17 +298,38 @@ defmodule Tweet do
   end
 
   def simtweet(user, num, tweets_db) when num > 1 do
+    IO.puts("#{user} sending tweet")
     pid_user = :"#{user}"
     # from tweets_db
-    tweet = Enum.at(tweets_db, 0)
-    GenServer.call(pid_user, {:tweet, tweet})
+    numOfTweetsInDb = length(tweets_db)
+
+    if num < numOfTweetsInDb do
+      tweet = Enum.at(tweets_db, num)
+      GenServer.call(pid_user, {:tweet, tweet})
+    else
+      mod = Integer.mod(num, numOfTweetsInDb)
+      tweet = Enum.at(tweets_db, mod)
+      GenServer.call(pid_user, {:tweet, tweet})
+    end
+
+    num = num - 1
+    simtweet(user, num, tweets_db)
   end
 
   def simtweet(user, num, tweets_db) do
+    IO.puts("#{user} sending tweet")
     pid_user = :"#{user}"
     # from tweets_db
-    tweet = Enum.at(tweets_db, 0)
-    GenServer.call(pid_user, {:tweet, tweet})
+    numOfTweetsInDb = length(tweets_db)
+
+    if num < numOfTweetsInDb do
+      tweet = Enum.at(tweets_db, num)
+      GenServer.call(pid_user, {:tweet, tweet})
+    else
+      mod = Integer.mod(num, numOfTweetsInDb)
+      tweet = Enum.at(tweets_db, mod)
+      GenServer.call(pid_user, {:tweet, tweet})
+    end
   end
 end
 
@@ -532,7 +553,8 @@ defmodule Main do
     # get number of fake tweets --> makeFakeTweets(numTweets)
     testTweets_db = []
     testTweets = makeFakeTweets(3, testTweets_db)
-    IO.inspect(testTweets, label: "test Tweets")
+    # IO.inspect(testTweets, label: "test Tweets")
+    Tweet.sendManyTweets(6, testTweets)
     # subscribe
     # sends that many tweets per user
     # re-tweet
@@ -557,5 +579,5 @@ defmodule Main do
   end
 end
 
-# Main.main_task()
-# Main.main()
+Main.main_task()
+Main.main()

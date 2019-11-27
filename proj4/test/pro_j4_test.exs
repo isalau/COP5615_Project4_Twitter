@@ -14,11 +14,12 @@ defmodule PROJ4Test do
     test "The registered users (4 in number) have corresponding Client processes (CSA)" do
       # Checking the number of users the Dynamic Supervisor has
       all_values = DynamicSupervisor.which_children(DySupervisor)
-      IO.inspect(all_values, label: "The CSAs")
+      # IO.inspect(all_values, label: "The CSAs")
       assert length(all_values) == 4
     end
 
     test "Can't Register with an already registered username" do
+      IO.puts("\n \n testing can't register with an already registered username")
       Register.reg("isabel", "p")
     end
 
@@ -53,7 +54,7 @@ defmodule PROJ4Test do
 
   describe "Tweet" do
     test "if user tweets it is in their tweets list" do
-      IO.puts("\n \n testing if user tweets it is in their tweets list")
+      # IO.puts("\n \n testing if user tweets it is in their tweets list")
 
       # have user1 tweet something
       sender = "isabel"
@@ -65,6 +66,8 @@ defmodule PROJ4Test do
     end
 
     test "if tweet is too long it should not pass" do
+      IO.puts("\n \n testing if tweet is too long it should not pass")
+
       sender = "isabel"
 
       tweet =
@@ -76,6 +79,7 @@ defmodule PROJ4Test do
     end
 
     test "if tweet is empty it should not pass" do
+      IO.puts("\n \n testing if tweet is empty it should not pass")
       sender = "isabel"
 
       tweet = " "
@@ -86,22 +90,22 @@ defmodule PROJ4Test do
     end
 
     test "if user tweets it is in their followers feed" do
-      IO.puts("\n \n testing if user tweets it is in their followers feed")
+      # IO.puts("\n \n testing if user tweets it is in their followers feed")
       # check that user2 has tweet in feed
       my_id = "anshika"
       id = :"#{my_id}_cssa"
       user2_feed = GenServer.call(id, {:get_feed})
-      IO.inspect(user2_feed, label: "user2 feed is")
+      # IO.inspect(user2_feed, label: "user2 feed is")
       assert user2_feed == ["test tweet for #testing i love puppies"]
     end
 
     test "if user tweets it is not in a non-followers feed" do
-      IO.puts("\n \n testing if user tweets it is not in a non-followers feed")
+      # IO.puts("\n \n testing if user tweets it is not in a non-followers feed")
       # check that user3 does not have tweet in feed
       my_id = "dobra"
       id = :"#{my_id}_cssa"
       user3_feed = GenServer.call(id, {:get_feed})
-      IO.inspect(user3_feed, label: "user3 feed is")
+      # IO.inspect(user3_feed, label: "user3 feed is")
       assert user3_feed == []
     end
 
@@ -124,7 +128,7 @@ defmodule PROJ4Test do
 
   describe "Re-Tweet" do
     test "if user re-tweets it is in their tweets list" do
-      IO.puts("\n \n testing if user re-tweets it is in their tweets list")
+      # IO.puts("\n \n testing if user re-tweets it is in their tweets list")
 
       # have user2 re-tweet something
       sender = "anshika"
@@ -159,12 +163,12 @@ defmodule PROJ4Test do
     # end
 
     test "if user re-tweets it is in their followers feed" do
-      IO.puts("\n \n testing if user re-tweets it is in their followers feed")
+      # IO.puts("\n \n testing if user re-tweets it is in their followers feed")
       # check that user3 has tweet in feed
       my_id = "dobra"
       id = :"#{my_id}_cssa"
       user3_feed = GenServer.call(id, {:get_feed})
-      IO.inspect(user3_feed, label: "user3 feed is")
+      # IO.inspect(user3_feed, label: "user3 feed is")
 
       assert user3_feed == [
                # "tweet3",
@@ -177,19 +181,19 @@ defmodule PROJ4Test do
     end
 
     test "if user re-tweets it is not in a non-followers feed" do
-      IO.puts("\n \n testing if user tweets it is not in a non-followers feed")
+      # IO.puts("\n \n testing if user tweets it is not in a non-followers feed")
       # check that user1 does not have tweet in feed
       my_id = "isabel"
       id = :"#{my_id}_cssa"
       user1_feed = GenServer.call(id, {:get_feed})
-      IO.inspect(user1_feed, label: "user1 feed is")
+      # IO.inspect(user1_feed, label: "user1 feed is")
       assert user1_feed == []
     end
   end
 
   describe "Query" do
     test "query for normal word: puppies" do
-      IO.puts("\n \n testing query for normal word: puppies")
+      # IO.puts("\n \n testing query for normal word: puppies")
 
       sender = "dobra"
       pid_sender = :"#{sender}"
@@ -209,7 +213,7 @@ defmodule PROJ4Test do
     end
 
     test "query for hashtag" do
-      IO.puts("\n \n testing query for hashtag")
+      # IO.puts("\n \n testing query for hashtag")
       sender = "dobra"
       my_id = :"#{sender}"
       hashtag = "testing"
@@ -217,7 +221,7 @@ defmodule PROJ4Test do
     end
 
     test "query for person" do
-      IO.puts("\n \n testing query for person")
+      # IO.puts("\n \n testing query for person")
       sender = "anshika"
       my_id = :"#{sender}"
       mention = "puppies"

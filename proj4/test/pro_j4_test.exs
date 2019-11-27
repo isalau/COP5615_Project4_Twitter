@@ -30,6 +30,7 @@ defmodule PROJ4Test do
       sender = "TA"
       id = :"#{sender}"
       Delete.remFromEngine(id)
+      Delete.deleteFromCSA(id)
     end
   end
 
@@ -226,6 +227,24 @@ defmodule PROJ4Test do
       my_id = :"#{sender}"
       mention = "puppies"
       Query.get_mentions(mention, my_id)
+    end
+  end
+
+  describe "Delete" do
+    test "The engine has removed the process from its list" do
+      sender = "dobra"
+      id = :"#{sender}"
+      Delete.remAsfollower(id)
+      {key_pass, subscribed} = Delete.remFromEngine(id)
+      Delete.deleteFromCSA(id)
+      assert subscribed = ["isabel", "anshika"]
+      assert length(key_pass) == 2
+      assert length(subscribed) == 2
+    end
+
+    test "The Client process for the deleted user has been deleted" do
+      all_values = DynamicSupervisor.which_children(DySupervisor)
+      assert length(all_values) == 2
     end
   end
 end

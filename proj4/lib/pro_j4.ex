@@ -187,21 +187,43 @@ end
 defmodule Register do
   def reg(name, pass) do
     # start a process with the given name - CSA
-    DySupervisor.start_child(name)
+    {_, tot_users, _, _} = :sys.get_state(:"#{Engine}_cssa")
 
-    # Start the CSSA
-    tweets = []
-    followers = []
-    subscribed = []
-    feed = []
-    Engine.start_link([followers, subscribed, feed, tweets, name])
+    if name in tot_users do
+      IO.puts("username already exists")
+    else
+      DySupervisor.start_child(name)
 
-    # Get the name on subscribed list  lst
-    # Get password name key word pair list in place of followers
-    pid = :"#{Engine}_cssa"
-    {new_key_pass, new_subscribed, _, _} = GenServer.call(pid, {:register, name, pass})
-    # IO.inspect(new_key_pass, label: "The key pass list is")
-    # IO.inspect(new_subscribed, label: "The people's list is")
+      # Start the CSSA
+      tweets = []
+      followers = []
+      subscribed = []
+      feed = []
+      Engine.start_link([followers, subscribed, feed, tweets, name])
+
+      # Get the name on subscribed list  lst
+      # Get password name key word pair list in place of followers
+      pid = :"#{Engine}_cssa"
+      {new_key_pass, new_subscribed, _, _} = GenServer.call(pid, {:register, name, pass})
+      # IO.inspect(new_key_pass, label: "The key pass list is")
+      # IO.inspect(new_subscribed, label: "The people's list is")
+      {new_key_pass, new_subscribed}
+    end
+  end
+
+  def children do
+    {_, names, _, _} = :sys.get_state(:"#{Engine}_cssa")
+
+    # for elem <- names do
+    #   id = :"#{elem}_cssa"
+    #   pid = GenServer.whereis(id)
+
+    #   if Process.alive?(pid) do
+    #     IO.inspect(elem, label: "Running")
+    #   end
+    # end
+
+    names
   end
 
   def makeKids(num, pass) when num > 1 do
@@ -238,6 +260,7 @@ defmodule Subscribe do
     # Put their name in your subscribed list
     {_, new_subscribed, _, _} = GenServer.call(pid_from, {:subscribed, pid_to, new_tweets})
     IO.inspect(new_subscribed, label: "you have subscribed to #{to}")
+    {new_followers, new_subscribed}
   end
 
   def subscribeMany(num_user) do
@@ -575,14 +598,15 @@ defmodule Delete do
         remAsfollower(id)
         remFromEngine(id)
         deleteFromCSA(id)
-        deleteFromCSSA(id)
+
+      # deleteFromCSSA(id)
 
       "yes" ->
         # deleteFromSupervisor(state)
         remAsfollower(id)
         remFromEngine(id)
         deleteFromCSA(id)
-        deleteFromCSSA(id)
+        # deleteFromCSSA(id)
 
         # "No\n" ->
         #   showMainMenu(state)
@@ -628,6 +652,7 @@ defmodule Delete do
       # elem = :"#{elem}_cssa"
       followers = GenServer.call(elem, {:Remove_me, id})
       IO.inspect(followers, label: "My #{elem} followers list")
+      followers
     end
   end
 
@@ -637,6 +662,7 @@ defmodule Delete do
     {new_key_pass, new_subscribed, _, _} = GenServer.call(pid, {:Unregister, id})
     IO.inspect(new_key_pass, label: "Engine's key_pass list")
     IO.inspect(new_subscribed, label: "Engine's subscribed after deleting ")
+    {new_key_pass, new_subscribed}
   end
 end
 

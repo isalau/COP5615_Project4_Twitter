@@ -654,12 +654,14 @@ defmodule Main do
   end
 
   # def main(arguments) do
-  #   # Make them into integers
+  #   #   # Make them into integers
   #   num_user = String.to_integer(Enum.at(arguments, 0))
-  #   # num_user = 3
+  #   #   # num_user = 3
   #   num_msg = String.to_integer(Enum.at(arguments, 1))
-  #   # num_msg = 4
+  #   #   # num_msg = 4
   #   runSimulation(num_user, num_msg)
+  # end
+
   #
   #   # task = String.trim(IO.gets("Want to Register or Login? \n"))
   #   #
@@ -790,7 +792,7 @@ defmodule Main do
   end
 end
 
-#
+# #
 # # Take command line arguments
 # arguments = System.argv()
 #

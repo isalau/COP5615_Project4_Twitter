@@ -818,7 +818,9 @@ end
 
 # #
 # # Take command line arguments
-# arguments = System.argv()
+arguments = System.argv()
 #
-# Main.main_task()
-# Main.main(arguments)
+num_user = String.to_integer(Enum.at(arguments, 0))
+num_msg = String.to_integer(Enum.at(arguments, 1))
+Main.main_task()
+Main.runSimulation(num_user, num_msg)
